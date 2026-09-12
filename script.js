@@ -58,6 +58,32 @@ document.addEventListener("visibilitychange", () => {
     }
 });
 
+function openMenu() {
+    document.getElementById('sidebar').classList.add('active');
+    document.getElementById('sidebar-overlay').classList.add('active');
+}
+
+function closeMenu() {
+    document.getElementById('sidebar').classList.remove('active');
+    document.getElementById('sidebar-overlay').classList.remove('active');
+}
+
+function toggleMainMenu() {
+    const menuBtn = document.getElementById('menu-icon-btn');
+    const mainMenu = document.getElementById('main-menu');
+    if (menuBtn && mainMenu) {
+        menuBtn.classList.toggle('open');
+        mainMenu.classList.toggle('show');
+    }
+}
+
+function startChallengeMode() {
+    closeMenu();
+    selectDifficulty(65, 'Expert');
+    msg.innerText = "Challenge Mode Active!";
+    msg.style.color = "var(--input-user)";
+}
+
 function updateThemeIcon() {
     if (document.body.classList.contains("dark-mode")) {
         moonIcon.style.display = "none";
@@ -100,20 +126,33 @@ function selectDifficulty(value, text) {
         if (opt.innerText === text) opt.classList.add('selected');
     });
     
-    closeDropdown();
-    newGame();
-}
-
-function closeDropdown() {
     const optionsMenu = document.getElementById('dropdown-options');
     const selectedBox = document.querySelector('.dropdown-selected');
     if (optionsMenu && optionsMenu.classList.contains('show')) {
         optionsMenu.classList.remove('show');
         selectedBox.classList.remove('open');
     }
+
+    newGame();
 }
 
-document.addEventListener('click', closeDropdown);
+document.addEventListener('click', (e) => {
+    const difficultyMenu = document.getElementById('dropdown-options');
+    const difficultySelected = document.querySelector('.dropdown-selected');
+    
+    if (difficultyMenu && difficultyMenu.classList.contains('show') && difficultySelected && !difficultySelected.contains(e.target)) {
+        difficultyMenu.classList.remove('show');
+        difficultySelected.classList.remove('open');
+    }
+
+    const mainMenuBtn = document.getElementById('menu-icon-btn');
+    const mainMenu = document.getElementById('main-menu');
+    
+    if (mainMenu && mainMenu.classList.contains('show') && mainMenuBtn && !mainMenuBtn.contains(e.target) && !mainMenu.contains(e.target)) {
+        mainMenu.classList.remove('show');
+        mainMenuBtn.classList.remove('open');
+    }
+});
 
 function fireConfetti() {
     if (typeof confetti !== 'function') return;
@@ -400,22 +439,6 @@ function newGame() {
     msg.innerText = "";
     generateSudoku();
     renderGrid();
-    clearHighlights();
-    resetTimer(); 
-    saveState();
-}
-
-function resetGrid() {
-    msg.innerText = "";
-    for (let i = 0; i < 9; i++) {
-        for (let j = 0; j < 9; j++) {
-            const input = document.getElementById(`cell-${i}-${j}`);
-            if (!input.readOnly) {
-                input.value = "";
-                input.style.color = "";
-            }
-        }
-    }
     clearHighlights();
     resetTimer(); 
     saveState();
