@@ -129,43 +129,18 @@ body {
     padding: 15px 0;
 }
 
-.arrow { font-size: 12px; transition: transform 0.2s ease; }
-
-.sidebar-links a, .sidebar-links .submenu-trigger {
+.sidebar-links a {
     padding: 15px 20px;
     text-decoration: none;
     color: var(--text-color);
     font-size: 16px;
     font-weight: 500;
     transition: background-color 0.2s, color 0.2s;
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
 }
 
-.sidebar-links a:hover, .sidebar-links .has-submenu:hover .submenu-trigger {
+.sidebar-links a:hover {
     background-color: var(--numpad-active);
     color: var(--input-user);
-}
-
-.sidebar .has-submenu { position: relative; }
-.sidebar .submenu {
-    position: absolute;
-    top: 0;
-    left: 100%;
-    width: 150px;
-    background-color: var(--grid-bg);
-    border: 1px solid var(--grid-border-thin);
-    display: none;
-    flex-direction: column;
-    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-    z-index: 2002;
-}
-
-.sidebar .has-submenu.open .submenu,
-.sidebar .has-submenu:hover .submenu {
-    display: flex;
 }
 
 .top-navbar {
@@ -285,7 +260,7 @@ body {
     pointer-events: auto;
 }
 
-.main-menu a, .main-menu .submenu-trigger {
+.main-menu a {
     padding: 24px 5vw;
     font-size: 20px;
     font-weight: 600;
@@ -293,25 +268,11 @@ body {
     text-decoration: none;
     border-bottom: 1px solid var(--nav-border);
     transition: background-color 0.2s;
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
 }
 
-.main-menu a:active, .main-menu .has-submenu:active .submenu-trigger, .main-menu .has-submenu.open .submenu-trigger {
+.main-menu a:active {
     background-color: var(--numpad-active);
 }
-
-.main-menu .has-submenu { display: flex; flex-direction: column; position: relative; }
-.main-menu .submenu {
-    display: none;
-    flex-direction: column;
-    background-color: var(--bg-color);
-}
-.main-menu .has-submenu.open .submenu { display: flex; }
-.main-menu .has-submenu.open .submenu-trigger .arrow { transform: rotate(90deg); }
-.main-menu .submenu a { padding-left: 10vw !important; border-bottom: none; font-size: 18px; }
 
 .main-content {
     display: flex;
@@ -397,9 +358,9 @@ body {
     width: 100%;
     min-width: 120px;
     background: var(--grid-bg);
-    border: 1px solid var(--grid-border-thin);
+    border: 1px solid var(--nav-border);
     border-radius: 8px;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
     overflow: hidden;
     opacity: 0;
     pointer-events: none;
@@ -663,12 +624,12 @@ input:focus { outline: none; }
         position: absolute;
         top: 40px;
         left: 0;
-        width: 220px;
+        width: 160px;
         height: auto;
         background-color: var(--grid-bg);
-        border: 1px solid var(--grid-border-thin);
+        border: 1px solid var(--nav-border);
         border-radius: 8px;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
         padding: 8px 0;
         transform: translateY(-10px);
         transition: opacity 0.2s ease, transform 0.2s ease;
@@ -679,40 +640,16 @@ input:focus { outline: none; }
         transform: translateY(0);
     }
 
-    .main-menu a, .main-menu .submenu-trigger {
-        padding: 12px 20px;
+    .main-menu a {
+        padding: 10px 16px;
         font-size: 14px;
         border-bottom: none;
     }
 
-    .main-menu a:hover, .main-menu a:active, .main-menu .has-submenu:hover .submenu-trigger, .main-menu .has-submenu.open .submenu-trigger {
+    .main-menu a:hover, .main-menu a:active {
         background-color: var(--numpad-active);
         color: var(--input-user);
     }
-    
-    .main-menu .has-submenu { display: block; }
-    .main-menu .submenu {
-        position: absolute;
-        top: -1px;
-        left: 100%;
-        width: 150px;
-        background-color: var(--grid-bg);
-        border: 1px solid var(--grid-border-thin);
-        border-radius: 8px;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-        padding: 8px 0;
-        display: none;
-        margin-left: 2px;
-    }
-    
-    .main-menu .has-submenu:hover .submenu,
-    .main-menu .has-submenu.open .submenu {
-        display: flex;
-    }
-    
-    .main-menu .submenu a { padding-left: 20px !important; font-size: 14px; }
-    .main-menu .has-submenu.open .submenu-trigger .arrow,
-    .main-menu .has-submenu:hover .submenu-trigger .arrow { transform: none; }
 
     .nav-content {
         display: grid;
@@ -730,7 +667,7 @@ input:focus { outline: none; }
         display: grid;
         grid-template-columns: min(65vh, 520px) min(35vh, 320px); 
         grid-template-areas:
-            "difficulty stats"
+            "stats stats"
             "board numpad"
             "board .";
         gap: 10px 60px;
@@ -738,20 +675,6 @@ input:focus { outline: none; }
         align-items: start;
         justify-content: center;
     }
-
-    .desktop-difficulty {
-        grid-area: difficulty;
-        align-items: center;
-        gap: 16px;
-        font-size: 15px;
-        font-weight: 600;
-        padding-bottom: 5px;
-    }
-
-    .diff-label { opacity: 0.5; }
-    .diff-opt { cursor: pointer; opacity: 0.6; transition: color 0.2s, opacity 0.2s; }
-    .diff-opt:hover { color: var(--input-user); opacity: 1; }
-    .diff-opt.selected { color: var(--input-user); opacity: 1; font-weight: 700; }
 
     .board-container { grid-area: board; width: 100%; }
 

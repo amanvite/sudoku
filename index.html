@@ -19,13 +19,6 @@
             <a href="#" class="mobile-only" onclick="startChallengeMode()">Challenge</a>
             <a href="rules/">Rules</a>
             <a href="awards/">Awards</a>
-            <div class="has-submenu" onclick="toggleSubmenu(event, this)">
-                <div class="submenu-trigger">Theme <span class="arrow">▶</span></div>
-                <div class="submenu">
-                    <a href="#" onclick="setTheme('light'); closeMenu(); event.stopPropagation();">Light</a>
-                    <a href="#" onclick="setTheme('dark'); closeMenu(); event.stopPropagation();">Dark</a>
-                </div>
-            </div>
         </div>
     </div>
     
@@ -45,13 +38,6 @@
                         <a href="#" class="mobile-only" onclick="toggleMainMenu(); startChallengeMode()">Challenge</a>
                         <a href="rules/">Rules</a>
                         <a href="awards/">Awards</a>
-                        <div class="has-submenu" onclick="toggleSubmenu(event, this)">
-                            <div class="submenu-trigger">Theme <span class="arrow">▶</span></div>
-                            <div class="submenu">
-                                <a href="#" onclick="setTheme('light'); toggleMainMenu(); event.stopPropagation();">Light</a>
-                                <a href="#" onclick="setTheme('dark'); toggleMainMenu(); event.stopPropagation();">Dark</a>
-                            </div>
-                        </div>
                     </div>
                 </div>
                 <h2>Sudoku</h2>
@@ -84,14 +70,6 @@
 
     <div class="main-content">
         <div class="app-container">
-            <div class="desktop-difficulty desktop-only">
-                <span class="diff-label">Difficulty:</span>
-                <span class="diff-opt" onclick="selectDifficulty(30, 'Easy')">Easy</span>
-                <span class="diff-opt selected" onclick="selectDifficulty(45, 'Medium')">Medium</span>
-                <span class="diff-opt" onclick="selectDifficulty(55, 'Hard')">Hard</span>
-                <span class="diff-opt" onclick="selectDifficulty(65, 'Expert')">Expert</span>
-            </div>
-
             <div class="stats-bar">
                 <div id="message"></div>
                 <div class="timer-box">

@@ -1,22 +1,4 @@
 const table = document.getElementById("solution-grid");
-const moonIcon = document.getElementById("moon-icon");
-const sunIcon = document.getElementById("sun-icon");
-
-function updateThemeIcon() {
-    if (document.body.classList.contains("dark-mode")) {
-        moonIcon.style.display = "none";
-        sunIcon.style.display = "block";
-    } else {
-        moonIcon.style.display = "block";
-        sunIcon.style.display = "none";
-    }
-}
-
-function toggleTheme() {
-    document.body.classList.toggle("dark-mode");
-    localStorage.setItem("sudokuTheme", document.body.classList.contains("dark-mode") ? "dark" : "light");
-    updateThemeIcon(); 
-}
 
 function renderSolution() {
     const savedData = localStorage.getItem('sudokuGame');
@@ -54,7 +36,6 @@ function init() {
     if (localStorage.getItem("sudokuTheme") === "dark") {
         document.body.classList.add("dark-mode");
     }
-    updateThemeIcon();
     renderSolution();
 }
 

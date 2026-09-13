@@ -82,21 +82,6 @@ function startChallengeMode() {
     msg.style.color = "var(--input-user)";
 }
 
-function setTheme(mode) {
-    if (mode === 'dark') {
-        document.body.classList.add("dark-mode");
-        localStorage.setItem("sudokuTheme", "dark");
-    } else {
-        document.body.classList.remove("dark-mode");
-        localStorage.setItem("sudokuTheme", "light");
-    }
-}
-
-function toggleSubmenu(e, el) {
-    e.stopPropagation();
-    el.classList.toggle('open');
-}
-
 function toggleDropdown(event) {
     event.stopPropagation(); 
     const optionsMenu = document.getElementById('dropdown-options');
@@ -118,11 +103,6 @@ function selectDifficulty(value, text) {
         if (opt.innerText === text) opt.classList.add('selected');
     });
 
-    document.querySelectorAll('.diff-opt').forEach(opt => {
-        opt.classList.remove('selected');
-        if (opt.innerText === text) opt.classList.add('selected');
-    });
-    
     const optionsMenu = document.getElementById('dropdown-options');
     const selectedBox = document.querySelector('.dropdown-selected');
     if (optionsMenu && optionsMenu.classList.contains('show')) {
@@ -149,13 +129,6 @@ document.addEventListener('click', (e) => {
         mainMenu.classList.remove('show');
         mainMenuBtn.classList.remove('open');
     }
-    
-    // Close open submenus if clicked outside
-    document.querySelectorAll('.has-submenu.open').forEach(menu => {
-        if (!menu.contains(e.target)) {
-            menu.classList.remove('open');
-        }
-    });
 });
 
 function fireConfetti() {
@@ -449,12 +422,6 @@ function newGame() {
 }
 
 function init() {
-    if (localStorage.getItem("sudokuTheme") === "dark") {
-        document.body.classList.add("dark-mode");
-    } else {
-        document.body.classList.remove("dark-mode");
-    }
-
     const savedData = localStorage.getItem('sudokuGame');
     if (savedData) {
         const data = JSON.parse(savedData);
@@ -474,10 +441,6 @@ function init() {
             if (diffTextElem) diffTextElem.innerText = diffText;
             
             document.querySelectorAll('.dropdown-option').forEach(opt => {
-                opt.classList.remove('selected');
-                if (opt.innerText === diffText) opt.classList.add('selected');
-            });
-            document.querySelectorAll('.diff-opt').forEach(opt => {
                 opt.classList.remove('selected');
                 if (opt.innerText === diffText) opt.classList.add('selected');
             });
