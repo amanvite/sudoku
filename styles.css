@@ -129,18 +129,43 @@ body {
     padding: 15px 0;
 }
 
-.sidebar-links a {
+.arrow { font-size: 12px; transition: transform 0.2s ease; }
+
+.sidebar-links a, .sidebar-links .submenu-trigger {
     padding: 15px 20px;
     text-decoration: none;
     color: var(--text-color);
     font-size: 16px;
     font-weight: 500;
     transition: background-color 0.2s, color 0.2s;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
-.sidebar-links a:hover {
+.sidebar-links a:hover, .sidebar-links .has-submenu:hover .submenu-trigger {
     background-color: var(--numpad-active);
     color: var(--input-user);
+}
+
+.sidebar .has-submenu { position: relative; }
+.sidebar .submenu {
+    position: absolute;
+    top: 0;
+    left: 100%;
+    width: 150px;
+    background-color: var(--grid-bg);
+    border: 1px solid var(--grid-border-thin);
+    display: none;
+    flex-direction: column;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    z-index: 2002;
+}
+
+.sidebar .has-submenu.open .submenu,
+.sidebar .has-submenu:hover .submenu {
+    display: flex;
 }
 
 .top-navbar {
@@ -260,7 +285,7 @@ body {
     pointer-events: auto;
 }
 
-.main-menu a {
+.main-menu a, .main-menu .submenu-trigger {
     padding: 24px 5vw;
     font-size: 20px;
     font-weight: 600;
@@ -268,11 +293,25 @@ body {
     text-decoration: none;
     border-bottom: 1px solid var(--nav-border);
     transition: background-color 0.2s;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
-.main-menu a:active {
+.main-menu a:active, .main-menu .has-submenu:active .submenu-trigger, .main-menu .has-submenu.open .submenu-trigger {
     background-color: var(--numpad-active);
 }
+
+.main-menu .has-submenu { display: flex; flex-direction: column; position: relative; }
+.main-menu .submenu {
+    display: none;
+    flex-direction: column;
+    background-color: var(--bg-color);
+}
+.main-menu .has-submenu.open .submenu { display: flex; }
+.main-menu .has-submenu.open .submenu-trigger .arrow { transform: rotate(90deg); }
+.main-menu .submenu a { padding-left: 10vw !important; border-bottom: none; font-size: 18px; }
 
 .main-content {
     display: flex;
@@ -329,7 +368,7 @@ body {
 
 .custom-dropdown { position: relative; font-family: 'Inter', sans-serif; }
 
-.dropdown-selected, .theme-btn {
+.dropdown-selected {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -346,8 +385,8 @@ body {
     user-select: none;
 }
 
-.dropdown-selected:hover, .theme-btn:hover { background-color: var(--numpad-active); }
-.dropdown-selected:active, .theme-btn:active { transform: scale(0.95); }
+.dropdown-selected:hover { background-color: var(--numpad-active); }
+.dropdown-selected:active { transform: scale(0.95); }
 .dropdown-selected .chevron { transition: transform 0.3s ease; }
 .dropdown-selected.open .chevron { transform: rotate(180deg); }
 
@@ -640,16 +679,40 @@ input:focus { outline: none; }
         transform: translateY(0);
     }
 
-    .main-menu a {
+    .main-menu a, .main-menu .submenu-trigger {
         padding: 12px 20px;
         font-size: 14px;
         border-bottom: none;
     }
 
-    .main-menu a:hover, .main-menu a:active {
+    .main-menu a:hover, .main-menu a:active, .main-menu .has-submenu:hover .submenu-trigger, .main-menu .has-submenu.open .submenu-trigger {
         background-color: var(--numpad-active);
         color: var(--input-user);
     }
+    
+    .main-menu .has-submenu { display: block; }
+    .main-menu .submenu {
+        position: absolute;
+        top: -1px;
+        left: 100%;
+        width: 150px;
+        background-color: var(--grid-bg);
+        border: 1px solid var(--grid-border-thin);
+        border-radius: 8px;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        padding: 8px 0;
+        display: none;
+        margin-left: 2px;
+    }
+    
+    .main-menu .has-submenu:hover .submenu,
+    .main-menu .has-submenu.open .submenu {
+        display: flex;
+    }
+    
+    .main-menu .submenu a { padding-left: 20px !important; font-size: 14px; }
+    .main-menu .has-submenu.open .submenu-trigger .arrow,
+    .main-menu .has-submenu:hover .submenu-trigger .arrow { transform: none; }
 
     .nav-content {
         display: grid;

@@ -3,8 +3,6 @@ let puzzle = [];
 let selectedCell = null;
 const table = document.getElementById("grid");
 const msg = document.getElementById("message");
-const moonIcon = document.getElementById("moon-icon");
-const sunIcon = document.getElementById("sun-icon");
 
 let secondsElapsed = 0;
 let timerInterval = null;
@@ -84,20 +82,19 @@ function startChallengeMode() {
     msg.style.color = "var(--input-user)";
 }
 
-function updateThemeIcon() {
-    if (document.body.classList.contains("dark-mode")) {
-        moonIcon.style.display = "none";
-        sunIcon.style.display = "block";
+function setTheme(mode) {
+    if (mode === 'dark') {
+        document.body.classList.add("dark-mode");
+        localStorage.setItem("sudokuTheme", "dark");
     } else {
-        moonIcon.style.display = "block";
-        sunIcon.style.display = "none";
+        document.body.classList.remove("dark-mode");
+        localStorage.setItem("sudokuTheme", "light");
     }
 }
 
-function toggleTheme() {
-    document.body.classList.toggle("dark-mode");
-    localStorage.setItem("sudokuTheme", document.body.classList.contains("dark-mode") ? "dark" : "light");
-    updateThemeIcon(); 
+function toggleSubmenu(e, el) {
+    e.stopPropagation();
+    el.classList.toggle('open');
 }
 
 function toggleDropdown(event) {
@@ -152,6 +149,13 @@ document.addEventListener('click', (e) => {
         mainMenu.classList.remove('show');
         mainMenuBtn.classList.remove('open');
     }
+    
+    // Close open submenus if clicked outside
+    document.querySelectorAll('.has-submenu.open').forEach(menu => {
+        if (!menu.contains(e.target)) {
+            menu.classList.remove('open');
+        }
+    });
 });
 
 function fireConfetti() {
@@ -447,6 +451,8 @@ function newGame() {
 function init() {
     if (localStorage.getItem("sudokuTheme") === "dark") {
         document.body.classList.add("dark-mode");
+    } else {
+        document.body.classList.remove("dark-mode");
     }
 
     const savedData = localStorage.getItem('sudokuGame');
@@ -510,8 +516,6 @@ function init() {
     } else {
         newGame();
     }
-    
-    updateThemeIcon(); 
 }
 
 init();
