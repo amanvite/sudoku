@@ -10,6 +10,10 @@ let isTimerRunning = false;
 let isGameWon = false;
 const timerDisplay = document.getElementById("timer");
 
+// Challenge Mode variables
+let isChallengeMode = false;
+let mistakes = 0;
+
 function formatTime(totalSeconds) {
     const m = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
     const s = (totalSeconds % 60).toString().padStart(2, '0');
@@ -21,7 +25,7 @@ function updateTimerDisplay() {
 }
 
 function startTimer() {
-    if (!isTimerRunning && !isGameWon) {
+    if (!isTimerRunning && !isGameWon && mistakes < 3) {
         isTimerRunning = true;
         timerInterval = setInterval(() => {
             secondsElapsed++;
@@ -50,7 +54,7 @@ document.addEventListener("visibilitychange", () => {
         stopTimer();
         saveState(); 
     } else {
-        if (!isGameWon) {
+        if (!isGameWon && mistakes < 3) {
             startTimer();
         }
     }
@@ -75,11 +79,38 @@ function toggleMainMenu() {
     }
 }
 
+function updateMistakesDisplay() {
+    document.getElementById('mistakes-display').innerText = mistakes + "/3";
+}
+
+function triggerGameOver() {
+    stopTimer();
+    document.getElementById('game-over-modal').classList.add('show');
+}
+
+function closeGameOverModalAndNewGame() {
+    document.getElementById('game-over-modal').classList.remove('show');
+    newGame();
+}
+
 function startChallengeMode() {
+    // Close menus if they are open
+    const menuBtn = document.getElementById('menu-icon-btn');
+    const mainMenu = document.getElementById('main-menu');
+    if (mainMenu && mainMenu.classList.contains('show')) {
+        mainMenu.classList.remove('show');
+        menuBtn.classList.remove('open');
+    }
     closeMenu();
-    selectDifficulty(65, 'Expert');
+
+    selectDifficulty(55, 'Hard'); 
+    isChallengeMode = true;
+    mistakes = 0;
+    document.getElementById('mistakes-container').style.display = 'flex';
+    updateMistakesDisplay();
     msg.innerText = "Challenge Mode Active!";
     msg.style.color = "var(--input-user)";
+    saveState();
 }
 
 function toggleDropdown(event) {
@@ -94,9 +125,6 @@ function toggleDropdown(event) {
 
 function selectDifficulty(value, text) {
     document.getElementById('difficulty').value = value;
-    
-    const diffTextElem = document.getElementById('dropdown-text');
-    if (diffTextElem) diffTextElem.innerText = text;
     
     document.querySelectorAll('.dropdown-option').forEach(opt => {
         opt.classList.remove('selected');
@@ -168,7 +196,9 @@ function saveState() {
         msgText: msg.innerText,
         msgColor: msg.style.color,
         secondsElapsed: secondsElapsed, 
-        isGameWon: isGameWon            
+        isGameWon: isGameWon,
+        isChallengeMode: isChallengeMode,
+        mistakes: mistakes
     };
     localStorage.setItem('sudokuGame', JSON.stringify(gameData));
 }
@@ -283,6 +313,30 @@ function highlightCells(r, c) {
     }
 }
 
+function handleCellInput(input, val, i, j) {
+    let prevVal = input.getAttribute('data-prev') || "";
+    input.value = val;
+    
+    if (val !== "" && val !== prevVal) {
+        if (val != solution[i][j]) {
+            input.style.color = "var(--error-color)";
+            if (isChallengeMode) {
+                mistakes++;
+                updateMistakesDisplay();
+                if (mistakes >= 3) {
+                    triggerGameOver();
+                }
+            }
+        } else {
+            input.style.color = "var(--input-user)";
+        }
+    } else if (val === "") {
+        input.style.color = "";
+    }
+    
+    input.setAttribute('data-prev', val);
+}
+
 function renderGrid() {
     table.innerHTML = "";
     selectedCell = null;
@@ -308,10 +362,16 @@ function renderGrid() {
             });
 
             input.addEventListener('input', () => {
+                if (isGameWon || (isChallengeMode && mistakes >= 3)) {
+                    input.value = input.getAttribute('data-prev') || "";
+                    return;
+                }
                 msg.innerText = "";
-                input.style.color = "";
-                input.value = input.value.replace(/[^1-9]/g, '');
-                if (input.value.length > 1) input.value = input.value.slice(-1);
+                let enteredVal = input.value.replace(/[^1-9]/g, '');
+                if (enteredVal.length > 1) enteredVal = enteredVal.slice(-1);
+                
+                handleCellInput(input, enteredVal, i, j);
+                
                 autoCheckWin();
                 saveState();
             });
@@ -323,8 +383,13 @@ function renderGrid() {
                 else if (e.key === 'ArrowLeft') c = Math.max(0, c - 1);
                 else if (e.key === 'ArrowRight') c = Math.min(8, c + 1);
                 else if (e.key === 'Backspace') {
+                    if (isGameWon || (isChallengeMode && mistakes >= 3)) {
+                        e.preventDefault();
+                        return;
+                    }
                     input.value = "";
                     input.style.color = "";
+                    input.setAttribute('data-prev', "");
                     msg.innerText = "";
                     autoCheckWin(); 
                     saveState();
@@ -345,9 +410,14 @@ function renderGrid() {
 
 function numPress(val) {
     if (selectedCell && !selectedCell.readOnly) {
-        selectedCell.value = val;
-        selectedCell.style.color = "";
+        if (isGameWon || (isChallengeMode && mistakes >= 3)) return;
+        
+        let i = parseInt(selectedCell.id.split('-')[1]);
+        let j = parseInt(selectedCell.id.split('-')[2]);
+        
         msg.innerText = "";
+        handleCellInput(selectedCell, val.toString(), i, j);
+        
         selectedCell.focus();
         autoCheckWin();
         saveState();
@@ -364,6 +434,7 @@ function autoCheckWin() {
             if (!input.readOnly) {
                 if (input.value === "") {
                     isFull = false;
+                    allCorrect = false; 
                 } else if (input.value != solution[i][j]) {
                     allCorrect = false;
                 }
@@ -371,48 +442,33 @@ function autoCheckWin() {
         }
     }
 
-    if (isFull) {
+    if (isFull && allCorrect) {
         msg.innerText = ""; 
-
-        if (allCorrect) {
-            if (!isGameWon) {
-                isGameWon = true; 
-                stopTimer();
-                fireConfetti();
-                
-                document.getElementById('victory-time').innerText = formatTime(secondsElapsed);
-                document.getElementById('v-diff').innerText = document.getElementById('dropdown-text').innerText;
-                document.getElementById('victory-modal').classList.add('show');
-            }
-        } else {
-            msg.innerText = "There are mistakes.";
+        if (!isGameWon) {
+            isGameWon = true; 
+            stopTimer();
+            fireConfetti();
+            
+            let diffVal = document.getElementById("difficulty").value;
+            let diffText = "Medium";
+            if (diffVal == 30) diffText = "Easy";
+            if (diffVal == 45) diffText = "Medium";
+            if (diffVal == 55) diffText = "Hard";
+            if (diffVal == 65) diffText = "Expert";
+            
+            document.getElementById('victory-time').innerText = formatTime(secondsElapsed);
+            document.getElementById('v-diff').innerText = diffText;
+            document.getElementById('victory-modal').classList.add('show');
         }
-
-        for (let i = 0; i < 9; i++) {
-            for (let j = 0; j < 9; j++) {
-                const input = document.getElementById(`cell-${i}-${j}`);
-                if (!input.readOnly) {
-                    if (input.value == solution[i][j]) {
-                        input.style.color = "var(--input-user)"; 
-                    } else {
-                        input.style.color = "var(--error-color)"; 
-                    }
-                }
-            }
-        }
-    } else {
-        for (let i = 0; i < 9; i++) {
-            for (let j = 0; j < 9; j++) {
-                const input = document.getElementById(`cell-${i}-${j}`);
-                if (!input.readOnly) {
-                    input.style.color = "var(--input-user)";
-                }
-            }
-        }
+    } else if (isFull && !allCorrect) {
+        msg.innerText = "There are mistakes.";
     }
 }
 
 function newGame() {
+    isChallengeMode = false;
+    mistakes = 0;
+    document.getElementById('mistakes-container').style.display = 'none';
     msg.innerText = "";
     generateSudoku();
     renderGrid();
@@ -422,6 +478,12 @@ function newGame() {
 }
 
 function init() {
+    if (localStorage.getItem("sudokuTheme") === "dark") {
+        document.body.classList.add("dark-mode");
+    } else {
+        document.body.classList.remove("dark-mode");
+    }
+
     const savedData = localStorage.getItem('sudokuGame');
     if (savedData) {
         const data = JSON.parse(savedData);
@@ -437,9 +499,6 @@ function init() {
             if (data.difficulty == 55) diffText = "Hard";
             if (data.difficulty == 65) diffText = "Expert";
             
-            const diffTextElem = document.getElementById("dropdown-text");
-            if (diffTextElem) diffTextElem.innerText = diffText;
-            
             document.querySelectorAll('.dropdown-option').forEach(opt => {
                 opt.classList.remove('selected');
                 if (opt.innerText === diffText) opt.classList.add('selected');
@@ -450,6 +509,16 @@ function init() {
             secondsElapsed = data.secondsElapsed;
             isGameWon = data.isGameWon || false;
             updateTimerDisplay();
+        }
+
+        if (data.isChallengeMode !== undefined) {
+            isChallengeMode = data.isChallengeMode;
+            mistakes = data.mistakes || 0;
+            if (isChallengeMode) {
+                document.getElementById('mistakes-container').style.display = 'flex';
+                updateMistakesDisplay();
+                if (mistakes >= 3) triggerGameOver(); 
+            }
         }
         
         renderGrid();
@@ -462,6 +531,7 @@ function init() {
                         if (!input.readOnly) {
                             input.value = data.currentState[i][j].value;
                             input.style.color = data.currentState[i][j].color;
+                            input.setAttribute('data-prev', input.value);
                         }
                     }
                 }
@@ -473,7 +543,7 @@ function init() {
             msg.style.color = data.msgColor;
         }
 
-        if (!isGameWon) {
+        if (!isGameWon && mistakes < 3) {
             startTimer();
         }
     } else {
