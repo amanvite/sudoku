@@ -58,8 +58,17 @@ document.addEventListener("visibilitychange", () => {
     }
 });
 
-function toggleMainMenu(event) {
-    if (event) event.stopPropagation();
+function openMenu() {
+    document.getElementById('sidebar').classList.add('active');
+    document.getElementById('sidebar-overlay').classList.add('active');
+}
+
+function closeMenu() {
+    document.getElementById('sidebar').classList.remove('active');
+    document.getElementById('sidebar-overlay').classList.remove('active');
+}
+
+function toggleMainMenu() {
     const menuBtn = document.getElementById('menu-icon-btn');
     const mainMenu = document.getElementById('main-menu');
     if (menuBtn && mainMenu) {
@@ -69,12 +78,7 @@ function toggleMainMenu(event) {
 }
 
 function startChallengeMode() {
-    const mainMenu = document.getElementById('main-menu');
-    const menuBtn = document.getElementById('menu-icon-btn');
-    if (mainMenu && mainMenu.classList.contains('show')) {
-        mainMenu.classList.remove('show');
-        if (menuBtn) menuBtn.classList.remove('open');
-    }
+    closeMenu();
     selectDifficulty(65, 'Expert');
     msg.innerText = "Challenge Mode Active!";
     msg.style.color = "var(--input-user)";

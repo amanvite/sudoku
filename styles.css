@@ -52,6 +52,97 @@ body {
 .desktop-only { display: none; }
 .mobile-only { display: flex; }
 
+.sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: -280px;
+    width: 280px;
+    height: 100%;
+    background: var(--grid-bg);
+    z-index: 2001;
+    transition: left 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar.active {
+    left: 0;
+}
+
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid var(--nav-border);
+}
+
+.sidebar-header h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--text-color);
+    letter-spacing: -0.5px;
+}
+
+.close-btn {
+    background: transparent;
+    border: none;
+    font-size: 28px;
+    cursor: pointer;
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    transition: transform 0.2s;
+}
+
+.close-btn:hover {
+    transform: scale(1.1);
+}
+
+.sidebar-links {
+    display: flex;
+    flex-direction: column;
+    padding: 15px 0;
+}
+
+.sidebar-links a {
+    padding: 15px 20px;
+    text-decoration: none;
+    color: var(--text-color);
+    font-size: 16px;
+    font-weight: 500;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.sidebar-links a:hover {
+    background-color: var(--numpad-active);
+    color: var(--input-user);
+}
+
 .top-navbar {
     width: 100%;
     height: 64px;
@@ -125,24 +216,12 @@ body {
     color: var(--text-color);
 }
 
-.desktop-tabs {
-    display: flex;
-    gap: 24px;
-    margin-left: 30px;
-}
-
-.desktop-tabs a {
+.nav-left a {
     text-decoration: none;
     color: var(--text-color);
-    font-size: 15px;
-    font-weight: 600;
-    opacity: 0.6;
-    transition: opacity 0.2s, color 0.2s;
-}
-
-.desktop-tabs a:hover {
-    opacity: 1;
-    color: var(--input-user);
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
 .main-menu {
@@ -520,44 +599,7 @@ input:focus { outline: none; }
     .desktop-only { display: flex; }
     .mobile-only { display: none !important; }
 
-    .main-menu { display: none !important; }
-
     .main-content { padding: 40px 20px; }
-
-    .menu-wrapper {
-        position: relative;
-    }
-
-    .main-menu {
-        position: absolute;
-        top: 40px;
-        left: 0;
-        width: 220px;
-        height: auto;
-        background-color: var(--grid-bg);
-        border: 1px solid var(--grid-border-thin);
-        border-radius: 8px;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        padding: 8px 0;
-        transform: translateY(-10px);
-        transition: opacity 0.2s ease, transform 0.2s ease;
-        z-index: 200;
-    }
-
-    .main-menu.show {
-        transform: translateY(0);
-    }
-
-    .main-menu a {
-        padding: 12px 20px;
-        font-size: 14px;
-        border-bottom: none;
-    }
-
-    .main-menu a:hover, .main-menu a:active {
-        background-color: var(--numpad-active);
-        color: var(--input-user);
-    }
 
     .nav-content {
         display: grid;
@@ -574,22 +616,22 @@ input:focus { outline: none; }
     .app-container {
         display: grid;
         grid-template-columns: min(65vh, 520px) min(35vh, 320px); 
-        grid-template-rows: auto 1fr 1fr;
+        grid-template-areas:
+            "difficulty stats"
+            "board numpad";
         gap: 10px 60px;
         max-width: 950px; 
-        align-items: center;
+        align-items: start;
         justify-content: center;
     }
 
     .desktop-difficulty {
-        grid-column: 1;
-        grid-row: 1;
+        grid-area: difficulty;
         align-items: center;
         gap: 16px;
         font-size: 15px;
         font-weight: 600;
         padding-bottom: 5px;
-        align-self: end;
     }
 
     .diff-label { opacity: 0.5; }
@@ -597,44 +639,27 @@ input:focus { outline: none; }
     .diff-opt:hover { color: var(--input-user); opacity: 1; }
     .diff-opt.selected { color: var(--input-user); opacity: 1; font-weight: 700; }
 
-    .board-container { 
-        grid-column: 1;
-        grid-row: 2 / span 2;
-        width: 100%; 
-    }
+    .board-container { grid-area: board; width: 100%; }
 
     .stats-bar { 
-        grid-column: 2;
-        grid-row: 2;
-        width: 100%;
-        flex-direction: column;
+        grid-area: stats; 
+        padding-bottom: 5px;
         align-items: center;
-        justify-content: flex-end;
-        padding-bottom: 20px;
-        gap: 10px;
-        align-self: end;
     }
 
-    #message { 
-        font-size: 18px; 
-        text-align: center;
-    }
-
+    #message { font-size: 18px; }
     .timer-box { align-items: center; }
     #timer { font-size: 24px; }
 
     .numpad { 
-        grid-column: 2;
-        grid-row: 3;
+        grid-area: numpad; 
         grid-template-columns: repeat(3, 1fr); 
         gap: 10px;
-        width: 100%;
-        align-self: start;
     }
 
     .numpad button { 
         aspect-ratio: 1 / 1; 
-        background-color: var(--bg-color); 
+        background-color: var(--btn-bg); 
         border: 1px solid var(--grid-border-thin);
         color: var(--input-user);
         font-size: 42px; 
