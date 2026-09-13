@@ -52,6 +52,97 @@ body {
 .desktop-only { display: none; }
 .mobile-only { display: flex; }
 
+.sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: -280px;
+    width: 280px;
+    height: 100%;
+    background: var(--grid-bg);
+    z-index: 2001;
+    transition: left 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar.active {
+    left: 0;
+}
+
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid var(--nav-border);
+}
+
+.sidebar-header h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--text-color);
+    letter-spacing: -0.5px;
+}
+
+.close-btn {
+    background: transparent;
+    border: none;
+    font-size: 28px;
+    cursor: pointer;
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    transition: transform 0.2s;
+}
+
+.close-btn:hover {
+    transform: scale(1.1);
+}
+
+.sidebar-links {
+    display: flex;
+    flex-direction: column;
+    padding: 15px 0;
+}
+
+.sidebar-links a {
+    padding: 15px 20px;
+    text-decoration: none;
+    color: var(--text-color);
+    font-size: 16px;
+    font-weight: 500;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.sidebar-links a:hover {
+    background-color: var(--numpad-active);
+    color: var(--input-user);
+}
+
 .top-navbar {
     width: 100%;
     height: 64px;
@@ -85,7 +176,6 @@ body {
 .menu-wrapper {
     display: flex;
     align-items: center;
-    position: relative;
 }
 
 .menu-icon-btn {
@@ -126,65 +216,47 @@ body {
     color: var(--text-color);
 }
 
-.desktop-tabs {
-    display: flex;
-    gap: 24px;
-    margin-left: 30px;
-}
-
-.desktop-tabs a {
+.nav-left a {
     text-decoration: none;
     color: var(--text-color);
-    font-size: 15px;
-    font-weight: 600;
-    opacity: 0.6;
-    transition: opacity 0.2s, color 0.2s;
-}
-
-.desktop-tabs a:hover {
-    opacity: 1;
-    color: var(--input-user);
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
 .main-menu {
-    position: absolute;
-    top: 40px;
-    left: -10px;
-    width: 200px;
-    height: auto;
-    background-color: var(--grid-bg);
-    border: 1px solid var(--grid-border-thin);
-    border-radius: 8px;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    padding: 8px 0;
+    position: fixed;
+    top: 64px;
+    left: 0;
+    width: 100vw;
+    height: calc(100dvh - 64px);
+    background-color: var(--bg-color);
+    z-index: 90;
     display: flex;
     flex-direction: column;
     opacity: 0;
     pointer-events: none;
-    transform: translateY(-10px);
-    transition: opacity 0.2s ease, transform 0.2s ease;
+    transition: opacity 0.3s ease;
     box-sizing: border-box;
-    z-index: 200;
 }
 
 .main-menu.show {
     opacity: 1;
     pointer-events: auto;
-    transform: translateY(0);
 }
 
 .main-menu a {
-    padding: 12px 20px;
-    font-size: 15px;
+    padding: 24px 5vw;
+    font-size: 20px;
     font-weight: 600;
     color: var(--text-color);
     text-decoration: none;
-    transition: background-color 0.2s, color 0.2s;
+    border-bottom: 1px solid var(--nav-border);
+    transition: background-color 0.2s;
 }
 
-.main-menu a:hover, .main-menu a:active {
+.main-menu a:active {
     background-color: var(--numpad-active);
-    color: var(--input-user);
 }
 
 .main-content {
@@ -366,6 +438,22 @@ input:focus { outline: none; }
     color: var(--text-color);
 }
 
+.controls {
+    display: flex;
+    width: 100%;
+    gap: 12px;
+}
+
+.controls button { 
+    flex: 1; padding: min(2vh, 16px); font-size: min(4vw, 2vh); 
+    font-weight: 600; color: white; border: none; border-radius: 6px; 
+    cursor: pointer; transition: transform 0.1s ease, filter 0.2s ease;
+    font-family: 'Inter', sans-serif;
+}
+.controls button:active { transform: scale(0.96); }
+button.new-btn { background-color: #5c7cfa; }
+button.new-btn:hover { filter: brightness(0.9); }
+
 .manual-container {
     width: 100%;
     max-width: 950px;
@@ -529,6 +617,41 @@ input:focus { outline: none; }
 
     .main-content { padding: 40px 20px; }
 
+    .menu-wrapper {
+        position: relative;
+    }
+
+    .main-menu {
+        position: absolute;
+        top: 40px;
+        left: 0;
+        width: 220px;
+        height: auto;
+        background-color: var(--grid-bg);
+        border: 1px solid var(--grid-border-thin);
+        border-radius: 8px;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        padding: 8px 0;
+        transform: translateY(-10px);
+        transition: opacity 0.2s ease, transform 0.2s ease;
+        z-index: 200;
+    }
+
+    .main-menu.show {
+        transform: translateY(0);
+    }
+
+    .main-menu a {
+        padding: 12px 20px;
+        font-size: 14px;
+        border-bottom: none;
+    }
+
+    .main-menu a:hover, .main-menu a:active {
+        background-color: var(--numpad-active);
+        color: var(--input-user);
+    }
+
     .nav-content {
         display: grid;
         grid-template-columns: min(65vh, 520px) min(35vh, 320px); 
@@ -546,7 +669,8 @@ input:focus { outline: none; }
         grid-template-columns: min(65vh, 520px) min(35vh, 320px); 
         grid-template-areas:
             "difficulty stats"
-            "board numpad";
+            "board numpad"
+            "board controls";
         gap: 10px 60px;
         max-width: 950px; 
         align-items: start;
@@ -604,4 +728,7 @@ input:focus { outline: none; }
         padding: 15px 0;
         color: var(--text-color);
     }
+
+    .controls { grid-area: controls; flex-direction: column; }
+    .controls button { padding: 18px; font-size: 18px; border-radius: 6px;}
 }

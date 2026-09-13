@@ -7,12 +7,26 @@
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeMenu()"></div>
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>Menu</h2>
+            <button class="close-btn" onclick="closeMenu()">&times;</button>
+        </div>
+        <div class="sidebar-links">
+            <a href="#" onclick="closeMenu(); newGame();">Classic Sudoku</a>
+            <a href="#" onclick="startChallengeMode()">Challenge Mode</a>
+            <a href="rules/">Rules</a>
+            <a href="awards/">Awards</a>
+        </div>
+    </div>
     
     <nav class="top-navbar">
         <div class="nav-content">
             <div class="nav-left">
                 <div class="menu-wrapper">
-                    <div id="menu-icon-btn" class="menu-icon-btn" onclick="toggleMainMenu(event)">
+                    <div id="menu-icon-btn" class="menu-icon-btn" onclick="toggleMainMenu()">
                         <svg class="menu-icon-svg" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <line x1="3" y1="6" x2="21" y2="6" class="line-1"></line>
                             <line x1="3" y1="12" x2="21" y2="12" class="line-2"></line>
@@ -20,17 +34,13 @@
                         </svg>
                     </div>
                     <div id="main-menu" class="main-menu">
-                        <a href="#" class="mobile-only" onclick="toggleMainMenu(event); newGame();">Classic</a>
-                        <a href="#" class="mobile-only" onclick="toggleMainMenu(event); startChallengeMode()">Challenge</a>
+                        <a href="#" onclick="toggleMainMenu(); newGame();">Classic Sudoku</a>
+                        <a href="#" onclick="toggleMainMenu(); startChallengeMode()">Challenge Mode</a>
                         <a href="rules/">Rules</a>
                         <a href="awards/">Awards</a>
                     </div>
                 </div>
                 <h2>Sudoku</h2>
-                <div class="desktop-tabs desktop-only">
-                    <a href="#" onclick="newGame()">Classic</a>
-                    <a href="#" onclick="startChallengeMode()">Challenge</a>
-                </div>
             </div>
             
             <div class="nav-right">
@@ -110,6 +120,10 @@
                         <line x1="12" y1="9" x2="18" y2="15"></line>
                     </svg>
                 </button>
+            </div>
+
+            <div class="controls">
+                <button class="new-btn" onclick="newGame()">New Game</button>
             </div>
         </div>
     </div>
