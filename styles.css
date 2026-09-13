@@ -176,6 +176,7 @@ body {
 .menu-wrapper {
     display: flex;
     align-items: center;
+    position: relative;
 }
 
 .menu-icon-btn {
@@ -225,38 +226,44 @@ body {
 }
 
 .main-menu {
-    position: fixed;
-    top: 64px;
-    left: 0;
-    width: 100vw;
-    height: calc(100dvh - 64px);
-    background-color: var(--bg-color);
-    z-index: 90;
+    position: absolute;
+    top: 40px;
+    left: -10px;
+    width: 220px;
+    height: auto;
+    background-color: var(--grid-bg);
+    border: 1px solid var(--grid-border-thin);
+    border-radius: 8px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    padding: 8px 0;
     display: flex;
     flex-direction: column;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.3s ease;
+    transform: translateY(-10px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
     box-sizing: border-box;
+    z-index: 200;
 }
 
 .main-menu.show {
     opacity: 1;
     pointer-events: auto;
+    transform: translateY(0);
 }
 
 .main-menu a {
-    padding: 24px 5vw;
-    font-size: 20px;
+    padding: 12px 20px;
+    font-size: 15px;
     font-weight: 600;
     color: var(--text-color);
     text-decoration: none;
-    border-bottom: 1px solid var(--nav-border);
-    transition: background-color 0.2s;
+    transition: background-color 0.2s, color 0.2s;
 }
 
-.main-menu a:active {
+.main-menu a:hover, .main-menu a:active {
     background-color: var(--numpad-active);
+    color: var(--input-user);
 }
 
 .main-content {
@@ -438,6 +445,22 @@ input:focus { outline: none; }
     color: var(--text-color);
 }
 
+.controls {
+    display: flex;
+    width: 100%;
+    gap: 12px;
+}
+
+.controls button { 
+    flex: 1; padding: min(2vh, 16px); font-size: min(4vw, 2vh); 
+    font-weight: 600; color: white; border: none; border-radius: 6px; 
+    cursor: pointer; transition: transform 0.1s ease, filter 0.2s ease;
+    font-family: 'Inter', sans-serif;
+}
+.controls button:active { transform: scale(0.96); }
+button.new-btn { background-color: #5c7cfa; }
+button.new-btn:hover { filter: brightness(0.9); }
+
 .manual-container {
     width: 100%;
     max-width: 950px;
@@ -618,7 +641,8 @@ input:focus { outline: none; }
         grid-template-columns: min(65vh, 520px) min(35vh, 320px); 
         grid-template-areas:
             "difficulty stats"
-            "board numpad";
+            "board numpad"
+            "board controls";
         gap: 10px 60px;
         max-width: 950px; 
         align-items: start;
@@ -676,4 +700,7 @@ input:focus { outline: none; }
         padding: 15px 0;
         color: var(--text-color);
     }
+
+    .controls { grid-area: controls; flex-direction: column; }
+    .controls button { padding: 18px; font-size: 18px; border-radius: 6px;}
 }
