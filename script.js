@@ -58,7 +58,8 @@ document.addEventListener("visibilitychange", () => {
     }
 });
 
-function toggleMainMenu() {
+function toggleMainMenu(event) {
+    if (event) event.stopPropagation();
     const menuBtn = document.getElementById('menu-icon-btn');
     const mainMenu = document.getElementById('main-menu');
     if (menuBtn && mainMenu) {
