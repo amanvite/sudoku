@@ -284,11 +284,6 @@ body {
     width: 100%;
 }
 
-.stats-right {
-    display: flex;
-    align-items: flex-end;
-}
-
 #message { 
     font-weight: 600; 
     font-size: min(4vw, 1.8vh);
@@ -319,7 +314,7 @@ body {
 
 .custom-dropdown { position: relative; font-family: 'Inter', sans-serif; }
 
-.dropdown-selected {
+.dropdown-selected, .theme-btn {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -336,47 +331,10 @@ body {
     user-select: none;
 }
 
-.dropdown-selected:hover { background-color: var(--numpad-active); }
-.dropdown-selected:active { transform: scale(0.95); }
+.dropdown-selected:hover, .theme-btn:hover { background-color: var(--numpad-active); }
+.dropdown-selected:active, .theme-btn:active { transform: scale(0.95); }
 .dropdown-selected .chevron { transition: transform 0.3s ease; }
 .dropdown-selected.open .chevron { transform: rotate(180deg); }
-
-/* Custom overrides for the New Game button */
-#new-game-dropdown .dropdown-selected {
-    background-color: #3b82f6; /* Lighter blue */
-    color: #ffffff;
-    border: none;
-}
-#new-game-dropdown .dropdown-selected:hover {
-    background-color: #2563eb;
-}
-
-/* Styles for the new Challenge button */
-.challenge-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 8px 12px;
-    font-size: 14px;
-    font-weight: 600;
-    border-radius: 8px;
-    background-color: #f59e0b; /* Lighter, darkish yellow/amber */
-    color: #ffffff;
-    border: none;
-    cursor: pointer;
-    font-family: 'Inter', sans-serif;
-    transition: transform 0.1s, background-color 0.2s;
-    user-select: none;
-}
-.challenge-btn:hover { background-color: #d97706; }
-.challenge-btn:active { transform: scale(0.95); }
-
-@media (max-width: 400px) {
-    .dropdown-selected, .challenge-btn {
-        padding: 6px 10px;
-        font-size: 13px;
-    }
-}
 
 .dropdown-options {
     position: absolute;
@@ -385,9 +343,9 @@ body {
     width: 100%;
     min-width: 120px;
     background: var(--grid-bg);
-    border: 1px solid var(--nav-border);
+    border: 1px solid var(--grid-border-thin);
     border-radius: 8px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     overflow: hidden;
     opacity: 0;
     pointer-events: none;
@@ -479,6 +437,22 @@ input:focus { outline: none; }
 .numpad .del-btn {
     color: var(--text-color);
 }
+
+.controls {
+    display: flex;
+    width: 100%;
+    gap: 12px;
+}
+
+.controls button { 
+    flex: 1; padding: min(2vh, 16px); font-size: min(4vw, 2vh); 
+    font-weight: 600; color: white; border: none; border-radius: 6px; 
+    cursor: pointer; transition: transform 0.1s ease, filter 0.2s ease;
+    font-family: 'Inter', sans-serif;
+}
+.controls button:active { transform: scale(0.96); }
+button.new-btn { background-color: #5c7cfa; }
+button.new-btn:hover { filter: brightness(0.9); }
 
 .manual-container {
     width: 100%;
@@ -647,6 +621,37 @@ input:focus { outline: none; }
         position: relative;
     }
 
+    .main-menu {
+        position: absolute;
+        top: 40px;
+        left: 0;
+        width: 220px;
+        height: auto;
+        background-color: var(--grid-bg);
+        border: 1px solid var(--grid-border-thin);
+        border-radius: 8px;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        padding: 8px 0;
+        transform: translateY(-10px);
+        transition: opacity 0.2s ease, transform 0.2s ease;
+        z-index: 200;
+    }
+
+    .main-menu.show {
+        transform: translateY(0);
+    }
+
+    .main-menu a {
+        padding: 12px 20px;
+        font-size: 14px;
+        border-bottom: none;
+    }
+
+    .main-menu a:hover, .main-menu a:active {
+        background-color: var(--numpad-active);
+        color: var(--input-user);
+    }
+
     .nav-content {
         display: grid;
         grid-template-columns: min(65vh, 520px) min(35vh, 320px); 
@@ -663,14 +668,28 @@ input:focus { outline: none; }
         display: grid;
         grid-template-columns: min(65vh, 520px) min(35vh, 320px); 
         grid-template-areas:
-            "stats stats"
+            "difficulty stats"
             "board numpad"
-            "board .";
+            "board controls";
         gap: 10px 60px;
         max-width: 950px; 
         align-items: start;
         justify-content: center;
     }
+
+    .desktop-difficulty {
+        grid-area: difficulty;
+        align-items: center;
+        gap: 16px;
+        font-size: 15px;
+        font-weight: 600;
+        padding-bottom: 5px;
+    }
+
+    .diff-label { opacity: 0.5; }
+    .diff-opt { cursor: pointer; opacity: 0.6; transition: color 0.2s, opacity 0.2s; }
+    .diff-opt:hover { color: var(--input-user); opacity: 1; }
+    .diff-opt.selected { color: var(--input-user); opacity: 1; font-weight: 700; }
 
     .board-container { grid-area: board; width: 100%; }
 
@@ -709,4 +728,7 @@ input:focus { outline: none; }
         padding: 15px 0;
         color: var(--text-color);
     }
+
+    .controls { grid-area: controls; flex-direction: column; }
+    .controls button { padding: 18px; font-size: 18px; border-radius: 6px;}
 }
