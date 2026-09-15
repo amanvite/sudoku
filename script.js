@@ -136,39 +136,60 @@ function closeModalAndNewGame() {
     newGame();
 }
 
+function changeUsername() {
+    const currentName = localStorage.getItem('sudokuPlayerName') || "";
+    const newName = prompt("Enter your new username:", currentName);
+    if (newName && newName.trim() !== "") {
+        localStorage.setItem('sudokuPlayerName', newName.trim());
+        document.getElementById('current-username').innerText = "Playing as: " + newName.trim();
+    }
+}
+
 function showLeaderboard() {
     document.getElementById('leaderboard-modal').classList.add('show');
-    const tbody = document.getElementById('leaderboard-body');
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Loading scores...</td></tr>';
+    
+    let playerName = localStorage.getItem('sudokuPlayerName');
+    if (!playerName) {
+        playerName = "Player_" + Math.floor(Math.random() * 10000);
+        localStorage.setItem('sudokuPlayerName', playerName);
+    }
+    document.getElementById('current-username').innerText = "Playing as: " + playerName;
+
+    const listBody = document.getElementById('leaderboard-body');
+    listBody.innerHTML = '<div class="lb-msg">Loading top scores...</div>';
     
     db.collection("leaderboard").orderBy("points", "desc").limit(10).get().then((querySnapshot) => {
-        tbody.innerHTML = '';
+        listBody.innerHTML = '';
         if (querySnapshot.empty) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No scores yet! Be the first!</td></tr>';
+            listBody.innerHTML = '<div class="lb-msg">No scores yet! Be the first to solve a puzzle.</div>';
             return;
         }
         
         let rank = 1;
         querySnapshot.forEach((doc) => {
             const data = doc.data();
-            const tr = document.createElement('tr');
             
-            let rankDisplay = rank;
-            if (rank === 1) rankDisplay = '<span class="rank-1">🥇</span>';
-            if (rank === 2) rankDisplay = '<span class="rank-2">🥈</span>';
-            if (rank === 3) rankDisplay = '<span class="rank-3">🥉</span>';
+            let rankClass = "lb-rank";
+            let rankIcon = rank;
+            if (rank === 1) { rankClass += " rank-1"; rankIcon = "🥇"; }
+            else if (rank === 2) { rankClass += " rank-2"; rankIcon = "🥈"; }
+            else if (rank === 3) { rankClass += " rank-3"; rankIcon = "🥉"; }
 
-            tr.innerHTML = `
-                <td>${rankDisplay}</td>
-                <td style="font-weight: 600;">${data.name}</td>
-                <td>${data.difficulty}</td>
-                <td style="color: var(--input-user); font-weight: 700;">${data.points}</td>
+            const row = document.createElement('div');
+            row.className = 'lb-row';
+            row.innerHTML = `
+                <div class="${rankClass}">${rankIcon}</div>
+                <div class="lb-details">
+                    <div class="lb-name">${data.name}</div>
+                    <div class="lb-diff">${data.difficulty} &bull; ${formatTime(data.time)}</div>
+                </div>
+                <div class="lb-score">${data.points}</div>
             `;
-            tbody.appendChild(tr);
+            listBody.appendChild(row);
             rank++;
         });
-    }).catch((error) => {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--error-color);">Error loading scores. Are you offline?</td></tr>';
+    }).catch(() => {
+        listBody.innerHTML = '<div class="lb-msg" style="color: var(--error-color);">Unable to load scores. Check your connection.</div>';
     });
 }
 
@@ -428,10 +449,6 @@ function autoCheckWin() {
                 localStorage.setItem('sudokuTotalScore', totalScore);
 
                 let playerName = localStorage.getItem('sudokuPlayerName');
-                if (!playerName) {
-                    playerName = prompt("Puzzle Solved! Enter a username for the leaderboard:") || "Player";
-                    localStorage.setItem('sudokuPlayerName', playerName.trim());
-                }
 
                 db.collection("leaderboard").add({
                     name: playerName,
@@ -484,6 +501,12 @@ function newGame() {
 }
 
 function init() {
+    let playerName = localStorage.getItem('sudokuPlayerName');
+    if (!playerName) {
+        playerName = "Player_" + Math.floor(Math.random() * 10000);
+        localStorage.setItem('sudokuPlayerName', playerName);
+    }
+
     const savedData = localStorage.getItem('sudokuGame');
     if (savedData) {
         const data = JSON.parse(savedData);

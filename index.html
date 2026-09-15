@@ -21,13 +21,14 @@
                     </div>
                     <div id="main-menu" class="main-menu">
                         <a href="rules/">Rules</a>
-                        <a href="#" onclick="toggleMainMenu(event); showLeaderboard();">Leaderboard</a>
                     </div>
                 </div>
                 <h2>Sudoku</h2>
             </div>
             
             <div class="nav-right">
+                <button class="leaderboard-btn" onclick="showLeaderboard()">Leaderboard</button>
+                
                 <div class="custom-dropdown" id="difficulty-dropdown">
                     <div class="dropdown-selected new-game-btn" onclick="toggleDropdown(event)">
                         <span>New Game</span>
@@ -142,22 +143,18 @@
     <div id="leaderboard-modal" class="modal">
         <div class="modal-content leaderboard-card">
             <div class="modal-header">
-                <h2>Global Leaderboard</h2>
+                <h2>Leaderboard</h2>
                 <button class="close-btn" onclick="closeLeaderboard()">&times;</button>
             </div>
+            
+            <div class="user-profile-section">
+                <span id="current-username" class="profile-name"></span>
+                <button class="edit-name-btn" onclick="changeUsername()">Edit</button>
+            </div>
+
             <div class="leaderboard-container">
-                <table class="leaderboard-table">
-                    <thead>
-                        <tr>
-                            <th>Rank</th>
-                            <th>Player</th>
-                            <th>Difficulty</th>
-                            <th>Score</th>
-                        </tr>
-                    </thead>
-                    <tbody id="leaderboard-body">
-                    </tbody>
-                </table>
+                <div class="leaderboard-list" id="leaderboard-body">
+                </div>
             </div>
         </div>
     </div>
