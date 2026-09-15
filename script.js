@@ -3,8 +3,6 @@ let puzzle = [];
 let selectedCell = null;
 const table = document.getElementById("grid");
 const msg = document.getElementById("message");
-const moonIcon = document.getElementById("moon-icon");
-const sunIcon = document.getElementById("sun-icon");
 
 let secondsElapsed = 0;
 let timerInterval = null;
@@ -58,46 +56,14 @@ document.addEventListener("visibilitychange", () => {
     }
 });
 
-function openMenu() {
-    document.getElementById('sidebar').classList.add('active');
-    document.getElementById('sidebar-overlay').classList.add('active');
-}
-
-function closeMenu() {
-    document.getElementById('sidebar').classList.remove('active');
-    document.getElementById('sidebar-overlay').classList.remove('active');
-}
-
-function toggleMainMenu() {
+function toggleMainMenu(event) {
+    if (event) event.stopPropagation();
     const menuBtn = document.getElementById('menu-icon-btn');
     const mainMenu = document.getElementById('main-menu');
     if (menuBtn && mainMenu) {
         menuBtn.classList.toggle('open');
         mainMenu.classList.toggle('show');
     }
-}
-
-function startChallengeMode() {
-    closeMenu();
-    selectDifficulty(65, 'Expert');
-    msg.innerText = "Challenge Mode Active!";
-    msg.style.color = "var(--input-user)";
-}
-
-function updateThemeIcon() {
-    if (document.body.classList.contains("dark-mode")) {
-        moonIcon.style.display = "none";
-        sunIcon.style.display = "block";
-    } else {
-        moonIcon.style.display = "block";
-        sunIcon.style.display = "none";
-    }
-}
-
-function toggleTheme() {
-    document.body.classList.toggle("dark-mode");
-    localStorage.setItem("sudokuTheme", document.body.classList.contains("dark-mode") ? "dark" : "light");
-    updateThemeIcon(); 
 }
 
 function toggleDropdown(event) {
@@ -445,10 +411,6 @@ function newGame() {
 }
 
 function init() {
-    if (localStorage.getItem("sudokuTheme") === "dark") {
-        document.body.classList.add("dark-mode");
-    }
-
     const savedData = localStorage.getItem('sudokuGame');
     if (savedData) {
         const data = JSON.parse(savedData);
@@ -510,8 +472,6 @@ function init() {
     } else {
         newGame();
     }
-    
-    updateThemeIcon(); 
 }
 
 init();
