@@ -21,7 +21,7 @@
                     </div>
                     <div id="main-menu" class="main-menu">
                         <a href="rules/">Rules</a>
-                        <a href="awards/">Awards</a>
+                        <a href="#" onclick="toggleMainMenu(event); showLeaderboard();">Leaderboard</a>
                     </div>
                 </div>
                 <h2>Sudoku</h2>
@@ -130,11 +130,40 @@
                     <span>Time</span>
                     <strong id="victory-time"></strong>
                 </div>
+                <div class="v-stat">
+                    <span>+Points</span>
+                    <strong id="victory-points"></strong>
+                </div>
             </div>
             <button onclick="closeModalAndNewGame()">Play Again</button>
         </div>
     </div>
 
+    <div id="leaderboard-modal" class="modal">
+        <div class="modal-content leaderboard-card">
+            <div class="modal-header">
+                <h2>Global Leaderboard</h2>
+                <button class="close-btn" onclick="closeLeaderboard()">&times;</button>
+            </div>
+            <div class="leaderboard-container">
+                <table class="leaderboard-table">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Player</th>
+                            <th>Difficulty</th>
+                            <th>Score</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <script src="script.js"></script>
 </body>

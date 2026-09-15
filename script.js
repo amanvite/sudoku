@@ -1,3 +1,16 @@
+const firebaseConfig = {
+    apiKey: "AIzaSyBkhwZMpfLzXxLovi1L_-lhJCdJM2Rwdt4",
+    authDomain: "sudoku-5c3a3.firebaseapp.com",
+    projectId: "sudoku-5c3a3",
+    storageBucket: "sudoku-5c3a3.firebasestorage.app",
+    messagingSenderId: "377907321708",
+    appId: "1:377907321708:web:1e3156a88ef310a531b149"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+db.enablePersistence().catch(() => {});
+
 let solution = [];
 let puzzle = [];
 let selectedCell = null;
@@ -79,19 +92,11 @@ function toggleDropdown(event) {
 function selectDifficulty(value, text) {
     document.getElementById('difficulty').value = value;
     
-    const diffTextElem = document.getElementById('dropdown-text');
-    if (diffTextElem) diffTextElem.innerText = text;
-    
     document.querySelectorAll('.dropdown-option').forEach(opt => {
         opt.classList.remove('selected');
         if (opt.innerText === text) opt.classList.add('selected');
     });
 
-    document.querySelectorAll('.diff-opt').forEach(opt => {
-        opt.classList.remove('selected');
-        if (opt.innerText === text) opt.classList.add('selected');
-    });
-    
     const optionsMenu = document.getElementById('dropdown-options');
     const selectedBox = document.querySelector('.dropdown-selected');
     if (optionsMenu && optionsMenu.classList.contains('show')) {
@@ -129,6 +134,46 @@ function fireConfetti() {
 function closeModalAndNewGame() {
     document.getElementById('victory-modal').classList.remove('show');
     newGame();
+}
+
+function showLeaderboard() {
+    document.getElementById('leaderboard-modal').classList.add('show');
+    const tbody = document.getElementById('leaderboard-body');
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Loading scores...</td></tr>';
+    
+    db.collection("leaderboard").orderBy("points", "desc").limit(10).get().then((querySnapshot) => {
+        tbody.innerHTML = '';
+        if (querySnapshot.empty) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No scores yet! Be the first!</td></tr>';
+            return;
+        }
+        
+        let rank = 1;
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            const tr = document.createElement('tr');
+            
+            let rankDisplay = rank;
+            if (rank === 1) rankDisplay = '<span class="rank-1">🥇</span>';
+            if (rank === 2) rankDisplay = '<span class="rank-2">🥈</span>';
+            if (rank === 3) rankDisplay = '<span class="rank-3">🥉</span>';
+
+            tr.innerHTML = `
+                <td>${rankDisplay}</td>
+                <td style="font-weight: 600;">${data.name}</td>
+                <td>${data.difficulty}</td>
+                <td style="color: var(--input-user); font-weight: 700;">${data.points}</td>
+            `;
+            tbody.appendChild(tr);
+            rank++;
+        });
+    }).catch((error) => {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--error-color);">Error loading scores. Are you offline?</td></tr>';
+    });
+}
+
+function closeLeaderboard() {
+    document.getElementById('leaderboard-modal').classList.remove('show');
 }
 
 function saveState() {
@@ -369,8 +414,36 @@ function autoCheckWin() {
                 stopTimer();
                 fireConfetti();
                 
+                let diffVal = document.getElementById("difficulty").value;
+                let diffText = "Medium";
+                let pointsEarned = 225;
+                
+                if (diffVal == 30) { diffText = "Easy"; pointsEarned = 50; }
+                if (diffVal == 45) { diffText = "Medium"; pointsEarned = 225; }
+                if (diffVal == 55) { diffText = "Hard"; pointsEarned = 1250; }
+                if (diffVal == 65) { diffText = "Expert"; pointsEarned = 2500; }
+
+                let totalScore = parseInt(localStorage.getItem('sudokuTotalScore')) || 0;
+                totalScore += pointsEarned;
+                localStorage.setItem('sudokuTotalScore', totalScore);
+
+                let playerName = localStorage.getItem('sudokuPlayerName');
+                if (!playerName) {
+                    playerName = prompt("Puzzle Solved! Enter a username for the leaderboard:") || "Player";
+                    localStorage.setItem('sudokuPlayerName', playerName.trim());
+                }
+
+                db.collection("leaderboard").add({
+                    name: playerName,
+                    difficulty: diffText,
+                    points: pointsEarned,
+                    time: secondsElapsed,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                }).catch(() => {});
+                
                 document.getElementById('victory-time').innerText = formatTime(secondsElapsed);
-                document.getElementById('v-diff').innerText = document.getElementById('dropdown-text').innerText;
+                document.getElementById('v-diff').innerText = diffText;
+                document.getElementById('victory-points').innerText = pointsEarned;
                 document.getElementById('victory-modal').classList.add('show');
             }
         } else {
@@ -426,14 +499,7 @@ function init() {
             if (data.difficulty == 55) diffText = "Hard";
             if (data.difficulty == 65) diffText = "Expert";
             
-            const diffTextElem = document.getElementById("dropdown-text");
-            if (diffTextElem) diffTextElem.innerText = diffText;
-            
             document.querySelectorAll('.dropdown-option').forEach(opt => {
-                opt.classList.remove('selected');
-                if (opt.innerText === diffText) opt.classList.add('selected');
-            });
-            document.querySelectorAll('.diff-opt').forEach(opt => {
                 opt.classList.remove('selected');
                 if (opt.innerText === diffText) opt.classList.add('selected');
             });
