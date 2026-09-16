@@ -23,6 +23,8 @@ let isTimerRunning = false;
 let isGameWon = false;
 const timerDisplay = document.getElementById("timer");
 
+let usernameCheckTimeout = null;
+
 async function initializeUsername() {
     let playerName = localStorage.getItem('sudokuPlayerName');
     if (!playerName) {
@@ -162,53 +164,128 @@ function closeModalAndNewGame() {
     newGame();
 }
 
-async function changeUsername() {
-    const currentName = localStorage.getItem('sudokuPlayerName') || "";
-    const newName = prompt("Enter your new username (letters and numbers only):", currentName);
-    
-    if (!newName || newName === currentName) return;
-    
-    const trimmedName = newName.trim();
-    const alphanumericRegex = /^[a-zA-Z0-9]+$/;
-    
-    if (!alphanumericRegex.test(trimmedName)) {
-        alert("Invalid username! Only letters and numbers are allowed (no spaces or symbols).");
-        return;
-    }
+function toggleEditMode(isEditing) {
+    const displayPanel = document.getElementById('lb-user-display');
+    const editPanel = document.getElementById('lb-user-edit');
+    const input = document.getElementById('inline-username-input');
+    const statusBox = document.getElementById('inline-username-status');
+    const saveBtn = document.getElementById('inline-save-btn');
 
-    const editBtn = document.querySelector('.edit-name-btn');
-    const originalText = editBtn.innerText;
-    editBtn.innerText = "Checking...";
-    editBtn.disabled = true;
-
-    try {
-        const docRef = db.collection("usernames").doc(trimmedName.toLowerCase());
-        const docSnap = await docRef.get();
-        
-        if (docSnap.exists) {
-            alert("That username is already taken. Please choose another one.");
-        } else {
-            await docRef.set({ original: trimmedName, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
-            localStorage.setItem('sudokuPlayerName', trimmedName);
-            const nameDisplay = document.getElementById('current-username');
-            if (nameDisplay) {
-                nameDisplay.innerText = "Playing as: " + trimmedName;
-            }
-            alert("Username successfully changed to " + trimmedName + "!");
-        }
-    } catch (error) {
-        alert("Error checking availability. Are you connected to the internet?");
-    } finally {
-        editBtn.innerText = originalText;
-        editBtn.disabled = false;
+    if (isEditing) {
+        displayPanel.classList.add('hidden');
+        editPanel.classList.remove('hidden');
+        input.value = localStorage.getItem('sudokuPlayerName') || "";
+        statusBox.innerText = "";
+        statusBox.className = "status-msg";
+        saveBtn.disabled = true;
+        saveBtn.innerText = "Save";
+        input.focus();
+    } else {
+        displayPanel.classList.remove('hidden');
+        editPanel.classList.add('hidden');
     }
 }
 
-function showLeaderboard() {
+function checkUsernameAvailability() {
+    const input = document.getElementById('inline-username-input');
+    const newName = input.value.trim();
+    const currentName = localStorage.getItem('sudokuPlayerName') || "";
+    const statusBox = document.getElementById('inline-username-status');
+    const saveBtn = document.getElementById('inline-save-btn');
+
+    clearTimeout(usernameCheckTimeout);
+    saveBtn.disabled = true;
+
+    if (newName === currentName) {
+        statusBox.innerText = "";
+        statusBox.className = "status-msg";
+        return;
+    }
+
+    const alphanumericRegex = /^[a-zA-Z0-9]+$/;
+    if (!newName) {
+        statusBox.innerText = "";
+        return;
+    }
+    if (!alphanumericRegex.test(newName)) {
+        statusBox.innerText = "Letters and numbers only.";
+        statusBox.className = "status-msg msg-error";
+        return;
+    }
+
+    statusBox.innerText = "Checking...";
+    statusBox.className = "status-msg";
+
+    usernameCheckTimeout = setTimeout(async () => {
+        try {
+            const docRef = db.collection("usernames").doc(newName.toLowerCase());
+            const docSnap = await docRef.get();
+            if (docSnap.exists) {
+                statusBox.innerText = "Taken!";
+                statusBox.className = "status-msg msg-error";
+            } else {
+                statusBox.innerText = "Available!";
+                statusBox.className = "status-msg msg-success";
+                saveBtn.disabled = false; 
+            }
+        } catch (error) {
+            statusBox.innerText = "Connection error.";
+            statusBox.className = "status-msg msg-error";
+        }
+    }, 500); 
+}
+
+async function confirmInlineUsername() {
+    const input = document.getElementById('inline-username-input');
+    const newName = input.value.trim();
+    const statusBox = document.getElementById('inline-username-status');
+    const saveBtn = document.getElementById('inline-save-btn');
+
+    saveBtn.disabled = true;
+    saveBtn.innerText = "Saving...";
+
+    try {
+        await db.collection("usernames").doc(newName.toLowerCase()).set({
+            original: newName,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        localStorage.setItem('sudokuPlayerName', newName);
+        
+        document.getElementById('lb-current-name').innerText = newName;
+        statusBox.innerText = "Saved successfully!";
+        statusBox.className = "status-msg msg-success";
+        
+        setTimeout(() => {
+            toggleEditMode(false);
+        }, 600);
+
+    } catch(e) {
+        statusBox.innerText = "Failed to save.";
+        statusBox.className = "status-msg msg-error";
+        saveBtn.innerText = "Save";
+        saveBtn.disabled = false;
+    }
+}
+
+async function showLeaderboard() {
+    const placeholder = document.getElementById('leaderboard-placeholder');
+    if (!document.getElementById('leaderboard-modal')) {
+        try {
+            const response = await fetch('leaderboard.html');
+            if (!response.ok) throw new Error('Network response was not ok');
+            placeholder.innerHTML = await response.text();
+        } catch (error) {
+            alert("Could not load leaderboard. Please check your connection.");
+            return;
+        }
+    }
+
     document.getElementById('leaderboard-modal').classList.add('show');
     
     const playerName = localStorage.getItem('sudokuPlayerName') || "Loading...";
-    document.getElementById('current-username').innerText = "Playing as: " + playerName;
+    document.getElementById('lb-current-name').innerText = playerName;
+    
+    toggleEditMode(false);
 
     const listBody = document.getElementById('leaderboard-body');
     listBody.innerHTML = '<div class="lb-msg">Loading top scores...</div>';
@@ -249,7 +326,10 @@ function showLeaderboard() {
 }
 
 function closeLeaderboard() {
-    document.getElementById('leaderboard-modal').classList.remove('show');
+    const modal = document.getElementById('leaderboard-modal');
+    if (modal) {
+        modal.classList.remove('show');
+    }
 }
 
 function saveState() {
