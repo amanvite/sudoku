@@ -3,35 +3,79 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Rules - Sudoku</title>
+<title>How to Play Sudoku</title>
 <link rel="stylesheet" href="../styles.css">
 </head>
 <body>
+
     <nav class="top-navbar">
         <div class="nav-content">
             <div class="nav-left">
-                <a href="../index.html">
-                    <svg class="menu-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <a href="../index.html" style="text-decoration: none; display: flex; align-items: center;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-color);">
                         <line x1="19" y1="12" x2="5" y2="12"></line>
                         <polyline points="12 19 5 12 12 5"></polyline>
                     </svg>
-                    <h2>Back to Game</h2>
+                    <h2>Sudoku</h2>
+                </a>
+            </div>
+            <div class="nav-right">
+                <a href="../index.html" class="dropdown-selected new-game-btn" style="text-decoration: none;">
+                    <span>Play Now</span>
                 </a>
             </div>
         </div>
     </nav>
 
-    <div class="manual-container">
-        <h3>Sudoku Rules</h3>
-        <p>The goal of Sudoku is to fill a 9x9 grid with numbers so that each row, column and 3x3 section contain all of the digits between 1 and 9.</p>
-        <div class="rules-box">
-            <ul>
-                <li>Every square has to contain a single number.</li>
-                <li>Only the numbers from 1 through to 9 can be used.</li>
-                <li>Each 3×3 box can only contain each number from 1 to 9 once.</li>
-                <li>Each vertical column can only contain each number from 1 to 9 once.</li>
-                <li>Each horizontal row can only contain each number from 1 to 9 once.</li>
-            </ul>
+    <div class="rules-page-container">
+        <header class="rules-hero">
+            <h1>Master the Grid</h1>
+            <p>Sudoku is a logic-based number placement puzzle. No math required—just pure focus.</p>
+        </header>
+
+        <section class="rules-section">
+            <h2>The Three Golden Rules</h2>
+            <p class="rules-subtext">To win, fill the 9x9 grid so that every row, column, and 3x3 box contains all digits from 1 to 9. A move is incorrect if you violate any of these rules:</p>
+            
+            <div class="rule-cards">
+                <div class="rule-card">
+                    <div class="rule-icon">1</div>
+                    <h3>Rows</h3>
+                    <p>No row can contain duplicate numbers. Each row must have exactly one of every number from 1 to 9.</p>
+                </div>
+                <div class="rule-card">
+                    <div class="rule-icon">2</div>
+                    <h3>Columns</h3>
+                    <p>No column can contain duplicate numbers. Each vertical column needs every digit from 1 to 9 exactly once.</p>
+                </div>
+                <div class="rule-card">
+                    <div class="rule-icon">3</div>
+                    <h3>3x3 Grids</h3>
+                    <p>The main board is divided into nine 3x3 squares. Each of these smaller squares must also contain 1 through 9.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="tips-section">
+            <h2>Pro Tips for Beginners</h2>
+            <div class="tip-box">
+                <div class="tip-header">
+                    <span class="tip-badge">Tip 1</span>
+                    <strong>The Low-Hanging Fruit</strong>
+                </div>
+                <p>Look for rows, columns, or 3x3 sections that already have 5 or more numbers filled in. Try placing the missing numbers in the empty cells. By using the process of elimination, you will often find spots where only one specific number can logically fit.</p>
+            </div>
+            <div class="tip-box">
+                <div class="tip-header">
+                    <span class="tip-badge">Tip 2</span>
+                    <strong>Visual Scanning</strong>
+                </div>
+                <p>Visually break the board into 3 large columns and 3 large rows. If two 3x3 boxes in a row already have the same number, the third box in that row must also contain it. Check the intersecting columns to find its exact location.</p>
+            </div>
+        </section>
+
+        <div class="rules-cta">
+            <a href="../index.html" class="play-action-btn">Start a New Game</a>
         </div>
     </div>
 
@@ -39,10 +83,5 @@
         <p>&copy; 2026. All rights reserved.</p>
     </footer>
 
-    <script>
-        if (localStorage.getItem("sudokuTheme") === "dark") {
-            document.body.classList.add("dark-mode");
-        }
-    </script>
 </body>
 </html>
