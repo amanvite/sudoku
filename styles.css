@@ -256,6 +256,12 @@ body {
 .leaderboard-btn:hover { background-color: var(--lb-btn-hover); }
 .leaderboard-btn:active { transform: scale(0.97); }
 
+@media (max-width: 1024px) {
+    .desktop-header-leaderboard {
+        display: none !important;
+    }
+}
+
 .custom-dropdown { position: relative; font-family: 'Inter', sans-serif; }
 
 .dropdown-selected {
@@ -857,6 +863,7 @@ input:focus { outline: none; }
 @media (min-width: 1025px) {
     .desktop-only { display: flex; }
     .mobile-only { display: none !important; }
+    .mobile-menu-leaderboard { display: none !important; }
 
     .main-content { padding: 40px 20px; }
 
