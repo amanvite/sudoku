@@ -1,3 +1,7 @@
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+db.enablePersistence().catch(() => {});
+
 let solution = [];
 let puzzle = [];
 let selectedCell = null;
@@ -9,6 +13,32 @@ let timerInterval = null;
 let isTimerRunning = false;
 let isGameWon = false;
 const timerDisplay = document.getElementById("timer");
+
+async function initializeUsername() {
+    let playerName = localStorage.getItem('sudokuPlayerName');
+    if (!playerName) {
+        let isAvailable = false;
+        let attempts = 0;
+        while (!isAvailable && attempts < 5) {
+            playerName = "Player" + Math.floor(Math.random() * 100000);
+            try {
+                const docRef = db.collection("usernames").doc(playerName.toLowerCase());
+                const docSnap = await docRef.get();
+                if (!docSnap.exists) {
+                    await docRef.set({ original: playerName, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+                    localStorage.setItem('sudokuPlayerName', playerName);
+                    isAvailable = true;
+                }
+            } catch (e) {
+                localStorage.setItem('sudokuPlayerName', playerName);
+                isAvailable = true;
+            }
+            attempts++;
+        }
+    }
+}
+
+initializeUsername();
 
 function formatTime(totalSeconds) {
     const m = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
@@ -123,23 +153,52 @@ function closeModalAndNewGame() {
     newGame();
 }
 
-function changeUsername() {
+async function changeUsername() {
     const currentName = localStorage.getItem('sudokuPlayerName') || "";
-    const newName = prompt("Enter your new username:", currentName);
-    if (newName && newName.trim() !== "") {
-        localStorage.setItem('sudokuPlayerName', newName.trim());
-        document.getElementById('current-username').innerText = "Playing as: " + newName.trim();
+    const newName = prompt("Enter your new username (letters and numbers only):", currentName);
+    
+    if (!newName || newName === currentName) return;
+    
+    const trimmedName = newName.trim();
+    const alphanumericRegex = /^[a-zA-Z0-9]+$/;
+    
+    if (!alphanumericRegex.test(trimmedName)) {
+        alert("Invalid username! Only letters and numbers are allowed (no spaces or symbols).");
+        return;
+    }
+
+    const editBtn = document.querySelector('.edit-name-btn');
+    const originalText = editBtn.innerText;
+    editBtn.innerText = "Checking...";
+    editBtn.disabled = true;
+
+    try {
+        const docRef = db.collection("usernames").doc(trimmedName.toLowerCase());
+        const docSnap = await docRef.get();
+        
+        if (docSnap.exists) {
+            alert("That username is already taken. Please choose another one.");
+        } else {
+            await docRef.set({ original: trimmedName, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+            localStorage.setItem('sudokuPlayerName', trimmedName);
+            const nameDisplay = document.getElementById('current-username');
+            if (nameDisplay) {
+                nameDisplay.innerText = "Playing as: " + trimmedName;
+            }
+            alert("Username successfully changed to " + trimmedName + "!");
+        }
+    } catch (error) {
+        alert("Error checking availability. Are you connected to the internet?");
+    } finally {
+        editBtn.innerText = originalText;
+        editBtn.disabled = false;
     }
 }
 
 function showLeaderboard() {
     document.getElementById('leaderboard-modal').classList.add('show');
     
-    let playerName = localStorage.getItem('sudokuPlayerName');
-    if (!playerName) {
-        playerName = "Player_" + Math.floor(Math.random() * 10000);
-        localStorage.setItem('sudokuPlayerName', playerName);
-    }
+    const playerName = localStorage.getItem('sudokuPlayerName') || "Loading...";
     document.getElementById('current-username').innerText = "Playing as: " + playerName;
 
     const listBody = document.getElementById('leaderboard-body');
@@ -488,12 +547,6 @@ function newGame() {
 }
 
 function init() {
-    let playerName = localStorage.getItem('sudokuPlayerName');
-    if (!playerName) {
-        playerName = "Player_" + Math.floor(Math.random() * 10000);
-        localStorage.setItem('sudokuPlayerName', playerName);
-    }
-
     const savedData = localStorage.getItem('sudokuGame');
     if (savedData) {
         const data = JSON.parse(savedData);
