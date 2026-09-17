@@ -190,29 +190,6 @@ function closeGameOverAndNewGame() {
     newGame();
 }
 
-function secondChance() {
-    for (let i = 0; i < 9; i++) {
-        for (let j = 0; j < 9; j++) {
-            const input = document.getElementById(`cell-${i}-${j}`);
-            if (puzzle[i][j] === 0) {
-                input.readOnly = false;
-                if (input.style.color === "var(--error-color)") {
-                    input.value = "";
-                    input.style.color = "";
-                }
-            }
-        }
-    }
-    
-    mistakesCount = 0;
-    updateMistakesDisplay();
-    isGameOver = false;
-    
-    document.getElementById('game-over-modal').classList.remove('show');
-    startTimer();
-    saveState();
-}
-
 function toggleEditMode(isEditing) {
     const displayPanel = document.getElementById('lb-user-display');
     const editPanel = document.getElementById('lb-user-edit');
@@ -801,6 +778,7 @@ function init() {
         if (isGameOver) {
             const inputs = document.querySelectorAll('#grid input');
             inputs.forEach(inp => inp.readOnly = true);
+            document.getElementById('game-over-modal').classList.add('show');
         } else if (!isGameWon) {
             startTimer();
         }
