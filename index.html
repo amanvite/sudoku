@@ -54,10 +54,17 @@
         <div class="app-container">
 
             <div class="stats-bar">
-                <div id="message"></div>
-                <div class="timer-box">
+                <div class="stats-col stats-left">
+                    <span class="timer-label">Difficulty</span>
+                    <span id="current-difficulty-display" class="stats-value">Medium</span>
+                </div>
+                <div class="stats-col stats-center">
+                    <span class="timer-label">Mistakes</span>
+                    <span id="mistakes-display" class="stats-value">0/3</span>
+                </div>
+                <div class="stats-col stats-right">
                     <span class="timer-label">Time</span>
-                    <span id="timer">00:00</span>
+                    <span id="timer" class="stats-value">00:00</span>
                 </div>
             </div>
             
@@ -115,6 +122,15 @@
                 </div>
             </div>
             <button onclick="closeModalAndNewGame()">Play Again</button>
+        </div>
+    </div>
+
+    <div id="game-over-modal" class="modal">
+        <div class="modal-content victory-card" style="border-color: var(--error-color);">
+            <div class="trophy" style="font-size: 54px; margin-bottom: 10px;">💔</div>
+            <h2 style="color: var(--error-color);">Game Over</h2>
+            <p style="margin-bottom: 30px; opacity: 0.8;">You made 3 mistakes.</p>
+            <button onclick="closeGameOverAndNewGame()" style="background-color: var(--error-color);">Try Again</button>
         </div>
     </div>
 

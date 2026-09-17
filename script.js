@@ -11,19 +11,27 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 db.enablePersistence().catch(() => {});
 
+let playerId = localStorage.getItem('sudokuPlayerId');
+if (!playerId) {
+    playerId = 'pid_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem('sudokuPlayerId', playerId);
+}
+
 let solution = [];
 let puzzle = [];
 let selectedCell = null;
 const table = document.getElementById("grid");
-const msg = document.getElementById("message");
 
 let secondsElapsed = 0;
 let timerInterval = null;
 let isTimerRunning = false;
 let isGameWon = false;
-const timerDisplay = document.getElementById("timer");
+let isGameOver = false;
 
-let usernameCheckTimeout = null;
+let mistakesCount = 0;
+const MAX_MISTAKES = 3;
+
+const timerDisplay = document.getElementById("timer");
 
 async function initializeUsername() {
     let playerName = localStorage.getItem('sudokuPlayerName');
@@ -51,6 +59,10 @@ async function initializeUsername() {
 
 initializeUsername();
 
+function updateMistakesDisplay() {
+    document.getElementById('mistakes-display').innerText = `${mistakesCount}/${MAX_MISTAKES}`;
+}
+
 function formatTime(totalSeconds) {
     const m = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
     const s = (totalSeconds % 60).toString().padStart(2, '0');
@@ -62,7 +74,7 @@ function updateTimerDisplay() {
 }
 
 function startTimer() {
-    if (!isTimerRunning && !isGameWon) {
+    if (!isTimerRunning && !isGameWon && !isGameOver) {
         isTimerRunning = true;
         timerInterval = setInterval(() => {
             secondsElapsed++;
@@ -82,6 +94,7 @@ function resetTimer() {
     stopTimer();
     secondsElapsed = 0;
     isGameWon = false;
+    isGameOver = false;
     updateTimerDisplay();
     startTimer();
 }
@@ -91,7 +104,7 @@ document.addEventListener("visibilitychange", () => {
         stopTimer();
         saveState(); 
     } else {
-        if (!isGameWon) {
+        if (!isGameWon && !isGameOver) {
             startTimer();
         }
     }
@@ -119,6 +132,7 @@ function toggleDropdown(event) {
 
 function selectDifficulty(value, text) {
     document.getElementById('difficulty').value = value;
+    document.getElementById('current-difficulty-display').innerText = text;
     
     document.querySelectorAll('.dropdown-option').forEach(opt => {
         opt.classList.remove('selected');
@@ -161,6 +175,11 @@ function fireConfetti() {
 
 function closeModalAndNewGame() {
     document.getElementById('victory-modal').classList.remove('show');
+    newGame();
+}
+
+function closeGameOverAndNewGame() {
+    document.getElementById('game-over-modal').classList.remove('show');
     newGame();
 }
 
@@ -250,17 +269,27 @@ async function confirmInlineUsername() {
             original: newName,
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
+        
+        const batch = db.batch();
+        
+        const idSnapshot = await db.collection("leaderboard").where("playerId", "==", playerId).get();
+        idSnapshot.forEach((doc) => {
+            batch.update(doc.ref, { name: newName });
+        });
+
+        if (oldName && oldName !== newName) {
+            const nameSnapshot = await db.collection("leaderboard").where("name", "==", oldName).get();
+            nameSnapshot.forEach((doc) => {
+                const data = doc.data();
+                if (!data.playerId || data.playerId === playerId) {
+                    batch.update(doc.ref, { name: newName, playerId: playerId });
+                }
+            });
+        }
+
+        await batch.commit();
         localStorage.setItem('sudokuPlayerName', newName);
 
-        if (oldName) {
-            const querySnapshot = await db.collection("leaderboard").where("name", "==", oldName).get();
-            const batch = db.batch();
-            querySnapshot.forEach((doc) => {
-                batch.update(doc.ref, { name: newName });
-            });
-            await batch.commit();
-        }
-        
         document.getElementById('lb-current-name').innerText = newName;
         statusBox.innerText = "Saved successfully!";
         statusBox.className = "status-msg msg-success";
@@ -318,12 +347,18 @@ async function showLeaderboard() {
             else if (rank === 2) { rankClass += " rank-2"; rankIcon = "🥈"; }
             else if (rank === 3) { rankClass += " rank-3"; rankIcon = "🥉"; }
 
+            const isMe = (data.playerId === playerId) || (!data.playerId && data.name === playerName);
+            const displayName = isMe ? playerName : data.name;
+            const nameDisplay = isMe 
+                ? `${displayName} <span style="font-size: 11px; color: var(--input-user); background: var(--selected-bg); padding: 2px 6px; border-radius: 10px; margin-left: 6px; font-weight: 800;">You</span>` 
+                : displayName;
+
             const row = document.createElement('div');
             row.className = 'lb-row';
             row.innerHTML = `
                 <div class="${rankClass}">${rankIcon}</div>
                 <div class="lb-details">
-                    <div class="lb-name">${data.name}</div>
+                    <div class="lb-name">${nameDisplay}</div>
                     <div class="lb-diff">${data.difficulty} &bull; ${formatTime(data.time)}</div>
                 </div>
                 <div class="lb-score">${data.points}</div>
@@ -366,10 +401,10 @@ function saveState() {
         puzzle: puzzle,
         difficulty: document.getElementById("difficulty").value,
         currentState: currentState,
-        msgText: msg.innerText,
-        msgColor: msg.style.color,
+        mistakesCount: mistakesCount,
         secondsElapsed: secondsElapsed, 
-        isGameWon: isGameWon            
+        isGameWon: isGameWon,
+        isGameOver: isGameOver            
     };
     localStorage.setItem('sudokuGame', JSON.stringify(gameData));
 }
@@ -484,6 +519,29 @@ function highlightCells(r, c) {
     }
 }
 
+function checkInputMistake(r, c, input) {
+    if (input.value === "") {
+        input.style.color = "";
+        return;
+    }
+    
+    if (input.value != solution[r][c]) {
+        mistakesCount++;
+        updateMistakesDisplay();
+        input.style.color = "var(--error-color)";
+        
+        if (mistakesCount >= MAX_MISTAKES) {
+            isGameOver = true;
+            stopTimer();
+            document.getElementById('game-over-modal').classList.add('show');
+            const inputs = document.querySelectorAll('#grid input');
+            inputs.forEach(inp => inp.readOnly = true);
+        }
+    } else {
+        input.style.color = "var(--input-user)";
+    }
+}
+
 function renderGrid() {
     table.innerHTML = "";
     selectedCell = null;
@@ -509,10 +567,15 @@ function renderGrid() {
             });
 
             input.addEventListener('input', () => {
-                msg.innerText = "";
+                if (isGameOver || isGameWon) {
+                    input.value = "";
+                    return;
+                }
                 input.style.color = "";
                 input.value = input.value.replace(/[^1-9]/g, '');
                 if (input.value.length > 1) input.value = input.value.slice(-1);
+                
+                checkInputMistake(i, j, input);
                 autoCheckWin();
                 saveState();
             });
@@ -524,9 +587,9 @@ function renderGrid() {
                 else if (e.key === 'ArrowLeft') c = Math.max(0, c - 1);
                 else if (e.key === 'ArrowRight') c = Math.min(8, c + 1);
                 else if (e.key === 'Backspace') {
+                    if (isGameOver || isGameWon) return;
                     input.value = "";
                     input.style.color = "";
-                    msg.innerText = "";
                     autoCheckWin(); 
                     saveState();
                 }
@@ -545,11 +608,16 @@ function renderGrid() {
 }
 
 function numPress(val) {
+    if (isGameOver || isGameWon) return;
     if (selectedCell && !selectedCell.readOnly) {
         selectedCell.value = val;
         selectedCell.style.color = "";
-        msg.innerText = "";
         selectedCell.focus();
+        
+        let r = parseInt(selectedCell.id.split('-')[1]);
+        let c = parseInt(selectedCell.id.split('-')[2]);
+        
+        checkInputMistake(r, c, selectedCell);
         autoCheckWin();
         saveState();
     }
@@ -572,73 +640,47 @@ function autoCheckWin() {
         }
     }
 
-    if (isFull) {
-        msg.innerText = ""; 
+    if (isFull && allCorrect && !isGameWon && !isGameOver) {
+        isGameWon = true; 
+        stopTimer();
+        fireConfetti();
+        
+        let diffVal = document.getElementById("difficulty").value;
+        let diffText = "Medium";
+        let pointsEarned = 225;
+        
+        if (diffVal == 30) { diffText = "Easy"; pointsEarned = 50; }
+        if (diffVal == 45) { diffText = "Medium"; pointsEarned = 225; }
+        if (diffVal == 55) { diffText = "Hard"; pointsEarned = 1250; }
+        if (diffVal == 65) { diffText = "Expert"; pointsEarned = 2500; }
 
-        if (allCorrect) {
-            if (!isGameWon) {
-                isGameWon = true; 
-                stopTimer();
-                fireConfetti();
-                
-                let diffVal = document.getElementById("difficulty").value;
-                let diffText = "Medium";
-                let pointsEarned = 225;
-                
-                if (diffVal == 30) { diffText = "Easy"; pointsEarned = 50; }
-                if (diffVal == 45) { diffText = "Medium"; pointsEarned = 225; }
-                if (diffVal == 55) { diffText = "Hard"; pointsEarned = 1250; }
-                if (diffVal == 65) { diffText = "Expert"; pointsEarned = 2500; }
+        let totalScore = parseInt(localStorage.getItem('sudokuTotalScore')) || 0;
+        totalScore += pointsEarned;
+        localStorage.setItem('sudokuTotalScore', totalScore);
 
-                let totalScore = parseInt(localStorage.getItem('sudokuTotalScore')) || 0;
-                totalScore += pointsEarned;
-                localStorage.setItem('sudokuTotalScore', totalScore);
+        let playerName = localStorage.getItem('sudokuPlayerName');
 
-                let playerName = localStorage.getItem('sudokuPlayerName');
-
-                db.collection("leaderboard").add({
-                    name: playerName,
-                    difficulty: diffText,
-                    points: pointsEarned,
-                    time: secondsElapsed,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                }).catch(() => {});
-                
-                document.getElementById('victory-time').innerText = formatTime(secondsElapsed);
-                document.getElementById('v-diff').innerText = diffText;
-                document.getElementById('victory-points').innerText = pointsEarned;
-                document.getElementById('victory-modal').classList.add('show');
-            }
-        } else {
-            msg.innerText = "There are mistakes.";
-        }
-
-        for (let i = 0; i < 9; i++) {
-            for (let j = 0; j < 9; j++) {
-                const input = document.getElementById(`cell-${i}-${j}`);
-                if (!input.readOnly) {
-                    if (input.value == solution[i][j]) {
-                        input.style.color = "var(--input-user)"; 
-                    } else {
-                        input.style.color = "var(--error-color)"; 
-                    }
-                }
-            }
-        }
-    } else {
-        for (let i = 0; i < 9; i++) {
-            for (let j = 0; j < 9; j++) {
-                const input = document.getElementById(`cell-${i}-${j}`);
-                if (!input.readOnly) {
-                    input.style.color = "var(--input-user)";
-                }
-            }
-        }
+        db.collection("leaderboard").add({
+            playerId: playerId,
+            name: playerName,
+            difficulty: diffText,
+            points: pointsEarned,
+            time: secondsElapsed,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        }).catch(() => {});
+        
+        document.getElementById('victory-time').innerText = formatTime(secondsElapsed);
+        document.getElementById('v-diff').innerText = diffText;
+        document.getElementById('victory-points').innerText = pointsEarned;
+        document.getElementById('victory-modal').classList.add('show');
     }
 }
 
 function newGame() {
-    msg.innerText = "";
+    isGameWon = false;
+    isGameOver = false;
+    mistakesCount = 0;
+    updateMistakesDisplay();
     generateSudoku();
     renderGrid();
     clearHighlights();
@@ -662,6 +704,8 @@ function init() {
             if (data.difficulty == 55) diffText = "Hard";
             if (data.difficulty == 65) diffText = "Expert";
             
+            document.getElementById('current-difficulty-display').innerText = diffText;
+            
             document.querySelectorAll('.dropdown-option').forEach(opt => {
                 opt.classList.remove('selected');
                 if (opt.innerText === diffText) opt.classList.add('selected');
@@ -672,6 +716,19 @@ function init() {
             secondsElapsed = data.secondsElapsed;
             isGameWon = data.isGameWon || false;
             updateTimerDisplay();
+        }
+        
+        if (data.mistakesCount !== undefined) {
+            mistakesCount = data.mistakesCount;
+        } else {
+            mistakesCount = 0;
+        }
+        updateMistakesDisplay();
+
+        if (data.isGameOver !== undefined) {
+            isGameOver = data.isGameOver;
+        } else {
+            isGameOver = false;
         }
         
         renderGrid();
@@ -690,15 +747,14 @@ function init() {
             }
         }
         
-        if (data.msgText) {
-            msg.innerText = data.msgText;
-            msg.style.color = data.msgColor;
-        }
-
-        if (!isGameWon) {
+        if (isGameOver) {
+            const inputs = document.querySelectorAll('#grid input');
+            inputs.forEach(inp => inp.readOnly = true);
+        } else if (!isGameWon) {
             startTimer();
         }
     } else {
+        document.getElementById('current-difficulty-display').innerText = "Medium";
         newGame();
     }
 }
