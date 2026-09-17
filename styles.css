@@ -25,6 +25,10 @@
     --lb-btn-text: #ffffff;
     --lb-btn-border: #111827;
     --lb-btn-hover: #1f2937;
+    
+    --go-title: #2b3a55;
+    --go-subtitle: #5c7cba;
+    --go-btn-bg: #6b8ed8;
 }
 
 body.dark-mode {
@@ -52,6 +56,10 @@ body.dark-mode {
     --lb-btn-text: #0f172a;
     --lb-btn-border: #f8fafc;
     --lb-btn-hover: #e2e8f0;
+
+    --go-title: #f8fafc;
+    --go-subtitle: #8da2d4;
+    --go-btn-bg: #6b8ed8;
 }
 
 body { 
@@ -265,10 +273,6 @@ body {
 .leaderboard-btn:hover { background-color: var(--lb-btn-hover); transform: translateY(-1px); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
 .leaderboard-btn:active { transform: translateY(0); }
 
-@media (max-width: 1024px) {
-    .desktop-header-leaderboard { display: none !important; }
-}
-
 .custom-dropdown { position: relative; font-family: 'Inter', sans-serif; }
 
 .dropdown-selected {
@@ -429,8 +433,8 @@ input:focus { outline: none; }
 
 .modal {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    background: rgba(17, 24, 39, 0.55);
+    backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
     display: flex; justify-content: center; align-items: center;
     z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
 }
@@ -440,6 +444,7 @@ input:focus { outline: none; }
 .victory-card {
     padding: 40px 30px;
     border: 1px solid var(--grid-border-thin);
+    width: 92%;
     max-width: 350px;
     background: var(--grid-bg); color: var(--text-color);
     border-radius: 16px; text-align: center;
@@ -510,12 +515,84 @@ input:focus { outline: none; }
 .victory-card button:hover { filter: brightness(1.1); }
 .victory-card button:active { transform: scale(0.96); }
 
-.lb-elite-card {
-    max-width: 420px;
+/* --- GAME OVER CARD --- */
+.sudoku-game-over-card {
+    padding: 32px 24px;
+    border: none;
+    width: 92%;
+    max-width: 320px;
+    background: var(--grid-bg);
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.sudoku-game-over-card h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--go-title);
+    margin: 0 0 12px 0;
+}
+
+.sudoku-game-over-card p {
+    font-size: 14px;
+    color: var(--go-subtitle);
+    margin: 0 0 28px 0;
+    line-height: 1.5;
+    font-weight: 500;
+}
+
+.go-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.second-chance-btn {
+    background-color: var(--go-btn-bg);
+    color: var(--go-btn-text);
+    border: none;
+    padding: 14px;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: filter 0.2s, transform 0.1s;
     width: 100%;
+}
+
+.second-chance-btn:hover {
+    filter: brightness(1.05);
+}
+
+.second-chance-btn:active {
+    transform: scale(0.98);
+}
+
+.new-game-text-btn {
+    background-color: transparent;
+    color: var(--go-btn-bg);
+    border: none;
+    padding: 10px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: opacity 0.2s;
+}
+
+.new-game-text-btn:hover {
+    opacity: 0.7;
+}
+
+/* --- LEADERBOARD CARD --- */
+.lb-elite-card {
+    width: 92%;
+    max-width: 400px;
     background: var(--grid-bg);
     border-radius: 24px;
-    padding: 32px;
+    padding: 28px;
     box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.18);
     border: 1px solid var(--nav-border);
     box-sizing: border-box;
@@ -770,6 +847,7 @@ input:focus { outline: none; }
 @media (min-width: 1025px) {
     .desktop-only { display: flex; }
     .mobile-only { display: none !important; }
+    .mobile-menu-leaderboard { display: none !important; }
 
     .main-content { padding: 40px 20px; }
 

@@ -22,6 +22,7 @@
                     <div id="main-menu" class="main-menu">
                         <a href="rules/">Rules</a>
                         <a href="#" class="mobile-menu-leaderboard" onclick="event.preventDefault(); toggleMainMenu(event); showLeaderboard();">Leaderboard</a>
+                        <a href="#" onclick="event.preventDefault(); toggleMainMenu(event); showSolution();">Show Solution</a>
                     </div>
                 </div>
                 <h2>Sudoku</h2>
@@ -126,11 +127,13 @@
     </div>
 
     <div id="game-over-modal" class="modal">
-        <div class="modal-content victory-card" style="border-color: var(--error-color);">
-            <div class="trophy" style="font-size: 54px; margin-bottom: 10px;">💔</div>
-            <h2 style="color: var(--error-color);">Game Over</h2>
-            <p style="margin-bottom: 30px; opacity: 0.8;">You made 3 mistakes.</p>
-            <button onclick="closeGameOverAndNewGame()" style="background-color: var(--error-color);">Try Again</button>
+        <div class="modal-content sudoku-game-over-card">
+            <h2>Game Over</h2>
+            <p>You have made 3 mistakes and lost this game</p>
+            <div class="go-buttons">
+                <button class="second-chance-btn" onclick="secondChance()">Second Chance</button>
+                <button class="new-game-text-btn" onclick="closeGameOverAndNewGame()">New Game</button>
+            </div>
         </div>
     </div>
 

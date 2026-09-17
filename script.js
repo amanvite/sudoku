@@ -21,6 +21,7 @@ let solution = [];
 let puzzle = [];
 let selectedCell = null;
 const table = document.getElementById("grid");
+const msg = document.getElementById("message");
 
 let secondsElapsed = 0;
 let timerInterval = null;
@@ -32,6 +33,8 @@ let mistakesCount = 0;
 const MAX_MISTAKES = 3;
 
 const timerDisplay = document.getElementById("timer");
+
+let usernameCheckTimeout = null;
 
 async function initializeUsername() {
     let playerName = localStorage.getItem('sudokuPlayerName');
@@ -164,6 +167,11 @@ document.addEventListener('click', (e) => {
     if (mainMenu && mainMenu.classList.contains('show') && mainMenuBtn && !mainMenuBtn.contains(e.target) && !mainMenu.contains(e.target)) {
         mainMenu.classList.remove('show');
         mainMenuBtn.classList.remove('open');
+    }
+    
+    const lbModal = document.getElementById('leaderboard-modal');
+    if (lbModal && e.target === lbModal) {
+        closeLeaderboard();
     }
 });
 
@@ -378,6 +386,29 @@ function closeLeaderboard() {
     }
 }
 
+function showSolution() {
+    if (isGameWon || isGameOver) return;
+    
+    isGameOver = true;
+    stopTimer();
+    
+    for (let i = 0; i < 9; i++) {
+        for (let j = 0; j < 9; j++) {
+            const input = document.getElementById(`cell-${i}-${j}`);
+            if (!input.readOnly) {
+                input.value = solution[i][j];
+                input.style.color = "var(--input-user)";
+                input.readOnly = true;
+            }
+        }
+    }
+    
+    msg.innerText = "Solution Revealed";
+    msg.style.color = "var(--text-color)";
+    clearHighlights();
+    saveState();
+}
+
 function saveState() {
     let currentState = [];
     for (let i = 0; i < 9; i++) {
@@ -404,7 +435,9 @@ function saveState() {
         mistakesCount: mistakesCount,
         secondsElapsed: secondsElapsed, 
         isGameWon: isGameWon,
-        isGameOver: isGameOver            
+        isGameOver: isGameOver,
+        msgText: msg.innerText,
+        msgColor: msg.style.color
     };
     localStorage.setItem('sudokuGame', JSON.stringify(gameData));
 }
@@ -590,6 +623,7 @@ function renderGrid() {
                     if (isGameOver || isGameWon) return;
                     input.value = "";
                     input.style.color = "";
+                    msg.innerText = "";
                     autoCheckWin(); 
                     saveState();
                 }
@@ -681,6 +715,8 @@ function newGame() {
     isGameOver = false;
     mistakesCount = 0;
     updateMistakesDisplay();
+    msg.innerText = "";
+    msg.style.color = "";
     generateSudoku();
     renderGrid();
     clearHighlights();
@@ -747,6 +783,11 @@ function init() {
             }
         }
         
+        if (data.msgText) {
+            msg.innerText = data.msgText;
+            msg.style.color = data.msgColor || "";
+        }
+
         if (isGameOver) {
             const inputs = document.querySelectorAll('#grid input');
             inputs.forEach(inp => inp.readOnly = true);
