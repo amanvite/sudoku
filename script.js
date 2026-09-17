@@ -385,27 +385,6 @@ function closeLeaderboard() {
     }
 }
 
-function showSolution() {
-    if (isGameWon || isGameOver) return;
-    
-    isGameOver = true;
-    stopTimer();
-    
-    for (let i = 0; i < 9; i++) {
-        for (let j = 0; j < 9; j++) {
-            const input = document.getElementById(`cell-${i}-${j}`);
-            if (!input.readOnly) {
-                input.value = solution[i][j];
-                input.style.color = "var(--input-user)";
-                input.readOnly = true;
-            }
-        }
-    }
-    
-    clearHighlights();
-    saveState();
-}
-
 function saveState() {
     let currentState = [];
     for (let i = 0; i < 9; i++) {
