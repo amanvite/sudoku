@@ -21,7 +21,6 @@ let solution = [];
 let puzzle = [];
 let selectedCell = null;
 const table = document.getElementById("grid");
-const msg = document.getElementById("message");
 
 let secondsElapsed = 0;
 let timerInterval = null;
@@ -189,6 +188,29 @@ function closeModalAndNewGame() {
 function closeGameOverAndNewGame() {
     document.getElementById('game-over-modal').classList.remove('show');
     newGame();
+}
+
+function secondChance() {
+    for (let i = 0; i < 9; i++) {
+        for (let j = 0; j < 9; j++) {
+            const input = document.getElementById(`cell-${i}-${j}`);
+            if (puzzle[i][j] === 0) {
+                input.readOnly = false;
+                if (input.style.color === "var(--error-color)") {
+                    input.value = "";
+                    input.style.color = "";
+                }
+            }
+        }
+    }
+    
+    mistakesCount = 0;
+    updateMistakesDisplay();
+    isGameOver = false;
+    
+    document.getElementById('game-over-modal').classList.remove('show');
+    startTimer();
+    saveState();
 }
 
 function toggleEditMode(isEditing) {
@@ -403,8 +425,6 @@ function showSolution() {
         }
     }
     
-    msg.innerText = "Solution Revealed";
-    msg.style.color = "var(--text-color)";
     clearHighlights();
     saveState();
 }
@@ -435,9 +455,7 @@ function saveState() {
         mistakesCount: mistakesCount,
         secondsElapsed: secondsElapsed, 
         isGameWon: isGameWon,
-        isGameOver: isGameOver,
-        msgText: msg.innerText,
-        msgColor: msg.style.color
+        isGameOver: isGameOver            
     };
     localStorage.setItem('sudokuGame', JSON.stringify(gameData));
 }
@@ -623,7 +641,6 @@ function renderGrid() {
                     if (isGameOver || isGameWon) return;
                     input.value = "";
                     input.style.color = "";
-                    msg.innerText = "";
                     autoCheckWin(); 
                     saveState();
                 }
@@ -715,8 +732,6 @@ function newGame() {
     isGameOver = false;
     mistakesCount = 0;
     updateMistakesDisplay();
-    msg.innerText = "";
-    msg.style.color = "";
     generateSudoku();
     renderGrid();
     clearHighlights();
@@ -783,11 +798,6 @@ function init() {
             }
         }
         
-        if (data.msgText) {
-            msg.innerText = data.msgText;
-            msg.style.color = data.msgColor || "";
-        }
-
         if (isGameOver) {
             const inputs = document.querySelectorAll('#grid input');
             inputs.forEach(inp => inp.readOnly = true);
