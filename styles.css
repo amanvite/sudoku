@@ -281,6 +281,10 @@ body {
 .leaderboard-btn:hover { background-color: var(--lb-btn-hover); transform: translateY(-1px); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
 .leaderboard-btn:active { transform: translateY(0); }
 
+@media (max-width: 1024px) {
+    .hide-on-mobile { display: none !important; }
+}
+
 .custom-dropdown { position: relative; font-family: 'Inter', sans-serif; }
 
 .dropdown-selected {
@@ -359,7 +363,6 @@ input {
     border: none; 
     text-align: center; 
     font-size: min(7vw, 4vh); 
-    font-weight: 500;
     font-family: 'Inter', sans-serif;
     box-sizing: border-box; 
     cursor: pointer;
@@ -371,8 +374,9 @@ input {
 input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 input[type=text] { -moz-appearance: textfield; }
 
-input:not([readonly]) { color: var(--input-user); font-weight: 600; }
-input[readonly] { color: var(--input-given); font-weight: 600; cursor: default; }
+input.user-cell { color: var(--input-user); font-weight: 600; }
+input.given-cell { color: var(--input-given); font-weight: 600; cursor: default; }
+
 input:focus { outline: none; }
 
 .numpad {

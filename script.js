@@ -264,7 +264,6 @@ function checkUsernameAvailability() {
 async function confirmInlineUsername() {
     const input = document.getElementById('inline-username-input');
     const newName = input.value.trim();
-    const oldName = localStorage.getItem('sudokuPlayerName');
     const statusBox = document.getElementById('inline-username-status');
     const saveBtn = document.getElementById('inline-save-btn');
 
@@ -277,24 +276,6 @@ async function confirmInlineUsername() {
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
         
-        const batch = db.batch();
-        
-        const idSnapshot = await db.collection("leaderboard").where("playerId", "==", playerId).get();
-        idSnapshot.forEach((doc) => {
-            batch.update(doc.ref, { name: newName });
-        });
-
-        if (oldName && oldName !== newName) {
-            const nameSnapshot = await db.collection("leaderboard").where("name", "==", oldName).get();
-            nameSnapshot.forEach((doc) => {
-                const data = doc.data();
-                if (!data.playerId || data.playerId === playerId) {
-                    batch.update(doc.ref, { name: newName, playerId: playerId });
-                }
-            });
-        }
-
-        await batch.commit();
         localStorage.setItem('sudokuPlayerName', newName);
 
         document.getElementById('lb-current-name').innerText = newName;
@@ -383,6 +364,27 @@ function closeLeaderboard() {
     if (modal) {
         modal.classList.remove('show');
     }
+}
+
+function showSolution() {
+    if (isGameWon || isGameOver) return;
+    
+    isGameOver = true;
+    stopTimer();
+    
+    for (let i = 0; i < 9; i++) {
+        for (let j = 0; j < 9; j++) {
+            const input = document.getElementById(`cell-${i}-${j}`);
+            if (input && input.classList.contains("user-cell")) {
+                input.value = solution[i][j];
+                input.style.color = "var(--input-user)";
+                input.readOnly = true;
+            }
+        }
+    }
+    
+    clearHighlights();
+    saveState();
 }
 
 function saveState() {
@@ -560,12 +562,24 @@ function renderGrid() {
             
             const input = document.createElement("input");
             input.type = "text";
-            input.inputMode = "none";
+            input.setAttribute("inputmode", "none");
             input.id = `cell-${i}-${j}`;
             
             if (val !== 0) {
                 input.value = val;
+                input.classList.add("given-cell");
                 input.readOnly = true;
+            } else {
+                input.classList.add("user-cell");
+                
+                input.addEventListener('touchstart', (e) => {
+                    if (input.classList.contains("user-cell")) {
+                        e.preventDefault(); 
+                        selectedCell = input;
+                        highlightCells(i, j);
+                        document.activeElement?.blur();
+                    }
+                }, { passive: false });
             }
 
             input.addEventListener('focus', () => {
@@ -616,7 +630,7 @@ function renderGrid() {
 
 function numPress(val) {
     if (isGameOver || isGameWon) return;
-    if (selectedCell && !selectedCell.readOnly) {
+    if (selectedCell && selectedCell.classList.contains("user-cell")) {
         selectedCell.value = val;
         selectedCell.style.color = "";
         selectedCell.focus();
@@ -637,7 +651,7 @@ function autoCheckWin() {
     for (let i = 0; i < 9; i++) {
         for (let j = 0; j < 9; j++) {
             const input = document.getElementById(`cell-${i}-${j}`);
-            if (!input.readOnly) {
+            if (input && input.classList.contains("user-cell")) {
                 if (input.value === "") {
                     isFull = false;
                 } else if (input.value != solution[i][j]) {
@@ -745,7 +759,7 @@ function init() {
                 for (let j = 0; j < 9; j++) {
                     const input = document.getElementById(`cell-${i}-${j}`);
                     if (input && data.currentState[i][j]) {
-                        if (!input.readOnly) {
+                        if (input.classList.contains("user-cell")) {
                             input.value = data.currentState[i][j].value;
                             input.style.color = data.currentState[i][j].color;
                         }
