@@ -238,6 +238,7 @@ function checkUsernameAvailability() {
 async function confirmInlineUsername() {
     const input = document.getElementById('inline-username-input');
     const newName = input.value.trim();
+    const oldName = localStorage.getItem('sudokuPlayerName');
     const statusBox = document.getElementById('inline-username-status');
     const saveBtn = document.getElementById('inline-save-btn');
 
@@ -250,6 +251,15 @@ async function confirmInlineUsername() {
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
         localStorage.setItem('sudokuPlayerName', newName);
+
+        if (oldName) {
+            const querySnapshot = await db.collection("leaderboard").where("name", "==", oldName).get();
+            const batch = db.batch();
+            querySnapshot.forEach((doc) => {
+                batch.update(doc.ref, { name: newName });
+            });
+            await batch.commit();
+        }
         
         document.getElementById('lb-current-name').innerText = newName;
         statusBox.innerText = "Saved successfully!";
@@ -257,6 +267,7 @@ async function confirmInlineUsername() {
         
         setTimeout(() => {
             toggleEditMode(false);
+            showLeaderboard(); 
         }, 600);
 
     } catch(e) {

@@ -1,48 +1,49 @@
 <div id="leaderboard-modal" class="modal">
-    <div class="modal-content lb-premium-card">
+    <div class="modal-content lb-elite-card">
         
-        <div class="lb-premium-header">
-            <div class="lb-header-title">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lb-trophy-icon"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>
-                <h2>Leaderboard</h2>
+        <div class="lb-elite-header">
+            <div>
+                <h2 class="lb-title">Leaderboard</h2>
+                <p class="lb-subtitle">Global Top 10 Scores</p>
             </div>
-            <button class="lb-close-btn" onclick="closeLeaderboard()">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <button class="lb-elite-close" onclick="closeLeaderboard()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
                     <line x1="6" y1="6" x2="18" y2="18"></line>
                 </svg>
             </button>
         </div>
 
-        <div class="lb-body-wrapper">
-            
-            <div class="lb-profile-section">
-                <div id="lb-user-display" class="lb-user-row">
-                    <div class="lb-user-meta">
-                        <span class="lb-user-title">Player</span>
-                        <strong id="lb-current-name">Loading...</strong>
-                    </div>
-                    <button class="lb-edit-trigger" onclick="toggleEditMode(true)" title="Edit Username">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
-                        <span>Edit</span>
-                    </button>
+        <div class="lb-elite-profile">
+            <div id="lb-user-display" class="lb-profile-view">
+                <div class="lb-profile-info">
+                    <span class="lb-profile-label">Current Player</span>
+                    <strong id="lb-current-name">Loading...</strong>
                 </div>
+                <button class="lb-elite-edit-btn" onclick="toggleEditMode(true)" title="Edit Username">
+                    <span>Edit</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                </button>
+            </div>
 
-                <div id="lb-user-edit" class="lb-edit-panel hidden">
-                    <div class="inline-input-group">
+            <div id="lb-user-edit" class="lb-profile-edit hidden">
+                <div class="lb-edit-flex">
+                    <div class="lb-input-wrapper">
                         <input type="text" id="inline-username-input" autocomplete="off" spellcheck="false" maxlength="15" oninput="checkUsernameAvailability()" placeholder="New username">
-                        <button class="inline-save-btn" id="inline-save-btn" onclick="confirmInlineUsername()" disabled>Save</button>
-                        <button class="lb-cancel-btn" onclick="toggleEditMode(false)">Cancel</button>
+                        <div id="inline-username-status" class="status-msg"></div>
                     </div>
-                    <div id="inline-username-status" class="status-msg"></div>
+                    <div class="lb-action-wrapper">
+                        <button class="lb-elite-cancel" onclick="toggleEditMode(false)">Cancel</button>
+                        <button class="lb-elite-save" id="inline-save-btn" onclick="confirmInlineUsername()" disabled>Save</button>
+                    </div>
                 </div>
             </div>
-
-            <div class="leaderboard-container">
-                <div class="leaderboard-list" id="leaderboard-body">
-                </div>
-            </div>
-
         </div>
+
+        <div class="leaderboard-container">
+            <div class="leaderboard-list" id="leaderboard-body">
+            </div>
+        </div>
+
     </div>
 </div>
