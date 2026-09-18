@@ -126,7 +126,9 @@ export default function SudokuGame() {
     const [inlineInput, setInlineInput] = useState('');
     const [inlineStatus, setInlineStatus] = useState({ msg: '', type: '' });
     const [isSavingUsername, setIsSavingUsername] = useState(false);
-    const [usernameCheckTimeout, setUsernameCheckTimeout] = useState<NodeJS.Timeout | null>(null);
+    
+    // Corrected from NodeJS.Timeout to number for strict browser compatibility
+    const [usernameCheckTimeout, setUsernameCheckTimeout] = useState<number | null>(null);
 
     useEffect(() => {
         const initUser = async () => {
@@ -238,11 +240,12 @@ export default function SudokuGame() {
     }, [grid, secondsElapsed, mistakesCount, isGameOver, isGameWon, solution, difficultyValue]);
 
     useEffect(() => {
-        let interval: NodeJS.Timeout;
+        // Corrected from NodeJS.Timeout to number for strict browser compatibility
+        let interval: number;
         if (!isGameOver && !isGameWon && solution.length > 0) {
-            interval = setInterval(() => setSecondsElapsed(s => s + 1), 1000);
+            interval = window.setInterval(() => setSecondsElapsed(s => s + 1), 1000);
         }
-        return () => clearInterval(interval);
+        return () => window.clearInterval(interval);
     }, [isGameOver, isGameWon, solution.length]);
 
     const formatTime = (totalSeconds: number) => {
@@ -361,7 +364,7 @@ export default function SudokuGame() {
         const newName = e.target.value.trim();
         setInlineInput(e.target.value);
         
-        if (usernameCheckTimeout) clearTimeout(usernameCheckTimeout);
+        if (usernameCheckTimeout) window.clearTimeout(usernameCheckTimeout);
         setIsSavingUsername(true);
 
         const currentName = localStorage.getItem('sudokuPlayerName') || "";
@@ -382,7 +385,7 @@ export default function SudokuGame() {
 
         setInlineStatus({ msg: 'Checking...', type: '' });
 
-        const timeout = setTimeout(async () => {
+        const timeout = window.setTimeout(async () => {
             try {
                 const docSnap = await db.collection("usernames").doc(newName.toLowerCase()).get();
                 if (docSnap.exists) {
