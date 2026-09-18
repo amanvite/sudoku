@@ -5,7 +5,7 @@ import Solution from './pages/Solution';
 
 function App() {
   return (
-    <Router>
+    <Router basename="/sudoku"> {/* <-- Add basename here! */}
       <Routes>
         <Route path="/" element={<SudokuGame />} />
         <Route path="/rules" element={<Rules />} />
