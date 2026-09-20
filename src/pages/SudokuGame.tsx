@@ -336,19 +336,17 @@ export default function SudokuGame() {
 
         const pName = localStorage.getItem('sudokuPlayerName') || 'Unknown';
         
-        db.collection("leaderboard").doc(playerId).set({
+        db.collection("global_leaderboard").doc(playerId as string).set({
             playerId: playerId,
             name: pName,
-            difficulty: difficultyText,
             points: firebase.firestore.FieldValue.increment(points),
-            time: secondsElapsed,
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true }).catch(() => {});
     };
 
     const fetchLeaderboard = () => {
         setLeaderboardData([]);
-        db.collection("leaderboard").orderBy("points", "desc").limit(10).get().then((querySnapshot) => {
+        db.collection("global_leaderboard").orderBy("points", "desc").limit(10).get().then((querySnapshot) => {
             const data = querySnapshot.docs.map(doc => doc.data());
             setLeaderboardData(data);
         }).catch(() => {});
@@ -415,11 +413,11 @@ export default function SudokuGame() {
             });
 
             const batch = db.batch();
-            const idSnapshot = await db.collection("leaderboard").where("playerId", "==", playerId).get();
+            const idSnapshot = await db.collection("global_leaderboard").where("playerId", "==", playerId).get();
             idSnapshot.forEach((doc) => batch.update(doc.ref, { name: newName }));
 
             if (oldName && oldName !== newName) {
-                const nameSnapshot = await db.collection("leaderboard").where("name", "==", oldName).get();
+                const nameSnapshot = await db.collection("global_leaderboard").where("name", "==", oldName).get();
                 nameSnapshot.forEach((doc) => {
                     const data = doc.data();
                     if (!data.playerId || data.playerId === playerId) {
@@ -676,7 +674,7 @@ export default function SudokuGame() {
                                                     {isMe ? lbUsername : data.name} 
                                                     {isMe && <span style={{fontSize: '11px', color: 'var(--input-user)', background: 'var(--selected-bg)', padding: '2px 6px', borderRadius: '10px', marginLeft: '6px', fontWeight: 800}}>You</span>}
                                                 </div>
-                                                <div className="lb-diff">{data.difficulty} &bull; {formatTime(data.time)}</div>
+                                                <div className="lb-diff">Lifetime Score</div>
                                             </div>
                                             <div className="lb-score">{data.points}</div>
                                         </div>
