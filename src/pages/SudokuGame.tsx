@@ -127,7 +127,6 @@ export default function SudokuGame() {
     const [inlineStatus, setInlineStatus] = useState({ msg: '', type: '' });
     const [isSavingUsername, setIsSavingUsername] = useState(false);
     
-    // Corrected from NodeJS.Timeout to number for strict browser compatibility
     const [usernameCheckTimeout, setUsernameCheckTimeout] = useState<number | null>(null);
 
     useEffect(() => {
@@ -237,16 +236,17 @@ export default function SudokuGame() {
             isGameOver
         };
         localStorage.setItem('sudokuGame', JSON.stringify(gameData));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [grid, secondsElapsed, mistakesCount, isGameOver, isGameWon, solution, difficultyValue]);
 
     useEffect(() => {
-        // Corrected from NodeJS.Timeout to number for strict browser compatibility
         let interval: number;
         if (!isGameOver && !isGameWon && solution.length > 0) {
             interval = window.setInterval(() => setSecondsElapsed(s => s + 1), 1000);
         }
         return () => window.clearInterval(interval);
-    }, [isGameOver, isGameWon, solution.length]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isGameOver, isGameWon, solution]);
 
     const formatTime = (totalSeconds: number) => {
         const m = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
@@ -335,14 +335,15 @@ export default function SudokuGame() {
         localStorage.setItem('sudokuTotalScore', (totalScore + points).toString());
 
         const pName = localStorage.getItem('sudokuPlayerName') || 'Unknown';
-        db.collection("leaderboard").add({
+        
+        db.collection("leaderboard").doc(playerId).set({
             playerId: playerId,
             name: pName,
             difficulty: difficultyText,
-            points: points,
+            points: firebase.firestore.FieldValue.increment(points),
             time: secondsElapsed,
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        }).catch(() => {});
+        }, { merge: true }).catch(() => {});
     };
 
     const fetchLeaderboard = () => {
