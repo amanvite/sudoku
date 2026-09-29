@@ -336,8 +336,11 @@ export default function SudokuGame() {
 
         const pName = localStorage.getItem('sudokuPlayerName') || 'Unknown';
         
-        db.collection("global_leaderboard").doc(playerId as string).set({
-            playerId: playerId,
+        // Use the lowercased username as the permanent Document ID!
+        const docId = pName.toLowerCase().replace(/[^a-z0-9]/g, '');
+        
+        // Write to a brand new collection "sudoku_scores" to wipe out the old ghosts
+        db.collection("sudoku_scores").doc(docId).set({
             name: pName,
             points: firebase.firestore.FieldValue.increment(points),
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
@@ -346,7 +349,7 @@ export default function SudokuGame() {
 
     const fetchLeaderboard = () => {
         setLeaderboardData([]);
-        db.collection("global_leaderboard").orderBy("points", "desc").limit(10).get().then((querySnapshot) => {
+        db.collection("sudoku_scores").orderBy("points", "desc").limit(10).get().then((querySnapshot) => {
             const data = querySnapshot.docs.map(doc => doc.data());
             setLeaderboardData(data);
         }).catch(() => {});
@@ -403,30 +406,33 @@ export default function SudokuGame() {
     const confirmUsernameChange = async () => {
         const newName = inlineInput.trim();
         const oldName = localStorage.getItem('sudokuPlayerName');
+        
+        const safeNewName = newName.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const safeOldName = oldName ? oldName.toLowerCase().replace(/[^a-z0-9]/g, '') : '';
+        
         setIsSavingUsername(true);
         setInlineStatus({ msg: 'Saving...', type: '' });
 
         try {
-            await db.collection("usernames").doc(newName.toLowerCase()).set({
+            await db.collection("usernames").doc(safeNewName).set({
                 original: newName,
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             });
 
-            const batch = db.batch();
-            const idSnapshot = await db.collection("global_leaderboard").where("playerId", "==", playerId).get();
-            idSnapshot.forEach((doc) => batch.update(doc.ref, { name: newName }));
-
-            if (oldName && oldName !== newName) {
-                const nameSnapshot = await db.collection("global_leaderboard").where("name", "==", oldName).get();
-                nameSnapshot.forEach((doc) => {
-                    const data = doc.data();
-                    if (!data.playerId || data.playerId === playerId) {
-                        batch.update(doc.ref, { name: newName, playerId: playerId });
-                    }
-                });
+            // If they change their name, we migrate their points to the new name and delete the old ghost
+            if (safeOldName && safeOldName !== safeNewName) {
+                const oldDoc = await db.collection("sudoku_scores").doc(safeOldName).get();
+                if (oldDoc.exists) {
+                    const data = oldDoc.data();
+                    await db.collection("sudoku_scores").doc(safeNewName).set({
+                        name: newName,
+                        points: data?.points || 0,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    await db.collection("sudoku_scores").doc(safeOldName).delete();
+                }
             }
 
-            await batch.commit();
             localStorage.setItem('sudokuPlayerName', newName);
             setLbUsername(newName);
             setInlineStatus({ msg: 'Saved successfully!', type: 'msg-success' });
@@ -664,17 +670,17 @@ export default function SudokuGame() {
                                     else if (rank === 2) { rankClass += " rank-2"; rankIcon = "🥈"; }
                                     else if (rank === 3) { rankClass += " rank-3"; rankIcon = "🥉"; }
 
-                                    const isMe = (data.playerId === playerId) || (!data.playerId && data.name === lbUsername);
+                                    const isMe = data.name === lbUsername; // Identifies user precisely by matching the username
 
                                     return (
-                                        <div className="lb-row" key={index}>
+                                        <div className="lb-row" key={index} style={{ alignItems: 'center' }}>
                                             <div className={rankClass}>{rankIcon}</div>
-                                            <div className="lb-details">
-                                                <div className="lb-name">
+                                            <div className="lb-details" style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+                                                <div className="lb-name" style={{ fontSize: '16px', margin: 0 }}>
                                                     {isMe ? lbUsername : data.name} 
                                                     {isMe && <span style={{fontSize: '11px', color: 'var(--input-user)', background: 'var(--selected-bg)', padding: '2px 6px', borderRadius: '10px', marginLeft: '6px', fontWeight: 800}}>You</span>}
                                                 </div>
-                                                <div className="lb-diff">Lifetime Score</div>
+                                                {/* Difficulty and Time removed! */}
                                             </div>
                                             <div className="lb-score">{data.points}</div>
                                         </div>
