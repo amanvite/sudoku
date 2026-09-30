@@ -109,6 +109,9 @@ export default function SudokuGame() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
+    // Theme State
+    const [theme, setTheme] = useState(localStorage.getItem('sudokuTheme') || 'light');
+
     const [grid, setGrid] = useState<CellData[][]>([]);
     const [solution, setSolution] = useState<number[][]>([]);
     const [selectedCell, setSelectedCell] = useState<{ r: number, c: number } | null>(null);
@@ -128,6 +131,21 @@ export default function SudokuGame() {
     const [isSavingUsername, setIsSavingUsername] = useState(false);
     
     const [usernameCheckTimeout, setUsernameCheckTimeout] = useState<number | null>(null);
+
+    // Apply Theme Effect
+    useEffect(() => {
+        if (theme === 'dark') {
+            document.body.classList.add('dark-mode');
+        } else {
+            document.body.classList.remove('dark-mode');
+        }
+        localStorage.setItem('sudokuTheme', theme);
+    }, [theme]);
+
+    const toggleTheme = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setTheme(prev => prev === 'light' ? 'dark' : 'light');
+    };
 
     useEffect(() => {
         const initUser = async () => {
@@ -335,11 +353,8 @@ export default function SudokuGame() {
         localStorage.setItem('sudokuTotalScore', (totalScore + points).toString());
 
         const pName = localStorage.getItem('sudokuPlayerName') || 'Unknown';
-        
-        // Use the lowercased username as the permanent Document ID!
         const docId = pName.toLowerCase().replace(/[^a-z0-9]/g, '');
         
-        // Write to a brand new collection "sudoku_scores" to wipe out the old ghosts
         db.collection("sudoku_scores").doc(docId).set({
             name: pName,
             points: firebase.firestore.FieldValue.increment(points),
@@ -419,7 +434,6 @@ export default function SudokuGame() {
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             });
 
-            // If they change their name, we migrate their points to the new name and delete the old ghost
             if (safeOldName && safeOldName !== safeNewName) {
                 const oldDoc = await db.collection("sudoku_scores").doc(safeOldName).get();
                 if (oldDoc.exists) {
@@ -465,6 +479,28 @@ export default function SudokuGame() {
                                 <Link to="/rules">Rules</Link>
                                 <Link to="/solution">Solution</Link>
                                 <a href="#" className="mobile-menu-leaderboard" onClick={(e) => { e.preventDefault(); openLeaderboard(); }}>Leaderboard</a>
+                                
+                                <div style={{ borderTop: '1px solid var(--nav-border)', margin: '8px 0' }}></div>
+                                <div style={{ padding: '8px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>
+                                    <span style={{ fontSize: '15px', fontWeight: 500, color: 'var(--text-color)' }}>Theme</span>
+                                    <button 
+                                        onClick={toggleTheme} 
+                                        style={{ 
+                                            background: 'var(--new-btn-bg)', 
+                                            color: 'var(--text-color)', 
+                                            border: '1px solid var(--nav-border)', 
+                                            padding: '6px 12px', 
+                                            borderRadius: '6px', 
+                                            cursor: 'pointer', 
+                                            fontSize: '13px', 
+                                            fontWeight: 600,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '6px'
+                                        }}>
+                                        {theme === 'dark' ? '🌙 Dark' : '☀️ Light'}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         <h2>Sudoku</h2>
@@ -670,7 +706,7 @@ export default function SudokuGame() {
                                     else if (rank === 2) { rankClass += " rank-2"; rankIcon = "🥈"; }
                                     else if (rank === 3) { rankClass += " rank-3"; rankIcon = "🥉"; }
 
-                                    const isMe = data.name === lbUsername; // Identifies user precisely by matching the username
+                                    const isMe = data.name === lbUsername; 
 
                                     return (
                                         <div className="lb-row" key={index} style={{ alignItems: 'center' }}>
@@ -680,7 +716,6 @@ export default function SudokuGame() {
                                                     {isMe ? lbUsername : data.name} 
                                                     {isMe && <span style={{fontSize: '11px', color: 'var(--input-user)', background: 'var(--selected-bg)', padding: '2px 6px', borderRadius: '10px', marginLeft: '6px', fontWeight: 800}}>You</span>}
                                                 </div>
-                                                {/* Difficulty and Time removed! */}
                                             </div>
                                             <div className="lb-score">{data.points}</div>
                                         </div>
