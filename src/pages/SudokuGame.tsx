@@ -109,8 +109,8 @@ export default function SudokuGame() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-    // Theme State
-    const [theme, setTheme] = useState(localStorage.getItem('sudokuTheme') || 'light');
+    // Advanced Theme State
+    const [themePreference, setThemePreference] = useState(localStorage.getItem('sudokuTheme') || 'system');
 
     const [grid, setGrid] = useState<CellData[][]>([]);
     const [solution, setSolution] = useState<number[][]>([]);
@@ -132,20 +132,34 @@ export default function SudokuGame() {
     
     const [usernameCheckTimeout, setUsernameCheckTimeout] = useState<number | null>(null);
 
-    // Apply Theme Effect
+    // Professional Theme Effect (Supports OS-level auto-switching)
     useEffect(() => {
-        if (theme === 'dark') {
-            document.body.classList.add('dark-mode');
-        } else {
-            document.body.classList.remove('dark-mode');
-        }
-        localStorage.setItem('sudokuTheme', theme);
-    }, [theme]);
+        const root = document.body;
+        const applyTheme = (themeMode: string) => {
+            if (themeMode === 'dark') {
+                root.classList.add('dark-mode');
+            } else {
+                root.classList.remove('dark-mode');
+            }
+        };
 
-    const toggleTheme = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        setTheme(prev => prev === 'light' ? 'dark' : 'light');
-    };
+        if (themePreference === 'system') {
+            const systemMedia = window.matchMedia('(prefers-color-scheme: dark)');
+            applyTheme(systemMedia.matches ? 'dark' : 'light');
+
+            const mediaListener = (e: MediaQueryListEvent) => {
+                if (themePreference === 'system') {
+                    applyTheme(e.matches ? 'dark' : 'light');
+                }
+            };
+            systemMedia.addEventListener('change', mediaListener);
+            return () => systemMedia.removeEventListener('change', mediaListener);
+        } else {
+            applyTheme(themePreference);
+        }
+        
+        localStorage.setItem('sudokuTheme', themePreference);
+    }, [themePreference]);
 
     useEffect(() => {
         const initUser = async () => {
@@ -475,51 +489,59 @@ export default function SudokuGame() {
                                     <line x1="3" y1="18" x2="21" y2="18" className="line-3"></line>
                                 </svg>
                             </div>
-                            <div className={`main-menu ${isMenuOpen ? 'show' : ''}`}>
+                            <div className={`main-menu ${isMenuOpen ? 'show' : ''}`} style={{ paddingBottom: '12px' }}>
                                 <Link to="/rules">Rules</Link>
                                 <Link to="/solution">Solution</Link>
                                 <a href="#" className="mobile-menu-leaderboard" onClick={(e) => { e.preventDefault(); openLeaderboard(); }}>Leaderboard</a>
                                 
-                                <div style={{ borderTop: '1px solid var(--nav-border)', margin: '4px 0' }}></div>
+                                <div style={{ borderTop: '1px solid var(--nav-border)', margin: '8px 0' }}></div>
                                 
-                                {/* Sleek Professional Theme Toggle */}
-                                <div 
-                                    onClick={toggleTheme}
-                                    style={{ 
-                                        padding: '10px 20px', 
-                                        display: 'flex', 
-                                        justifyContent: 'space-between', 
-                                        alignItems: 'center',
-                                        cursor: 'pointer',
-                                    }} 
-                                >
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-color)' }}>
-                                        {theme === 'dark' ? (
-                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-                                        ) : (
-                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-                                        )}
-                                        <span style={{ fontSize: '15px', fontWeight: 500 }}>Dark Mode</span>
-                                    </div>
-                                    <div style={{
-                                        width: '36px',
-                                        height: '20px',
-                                        backgroundColor: theme === 'dark' ? 'var(--input-user)' : '#d1d5db',
-                                        borderRadius: '10px',
-                                        position: 'relative',
-                                        transition: 'background-color 0.3s ease'
-                                    }}>
-                                        <div style={{
-                                            width: '16px',
-                                            height: '16px',
-                                            backgroundColor: '#ffffff',
-                                            borderRadius: '50%',
-                                            position: 'absolute',
-                                            top: '2px',
-                                            left: theme === 'dark' ? '18px' : '2px',
-                                            transition: 'left 0.3s cubic-bezier(0.4, 0.0, 0.2, 1)',
-                                            boxShadow: '0 1px 2px rgba(0, 0, 0, 0.2)'
-                                        }}></div>
+                                {/* Professional Theme Segmented Control */}
+                                <div onClick={(e) => e.stopPropagation()} style={{ padding: '4px 16px' }}>
+                                    <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px', display: 'block' }}>Appearance</span>
+                                    <div style={{ display: 'flex', background: 'var(--numpad-active)', padding: '4px', borderRadius: '8px', gap: '4px', border: '1px solid var(--nav-border)' }}>
+                                        <button 
+                                            onClick={() => setThemePreference('system')}
+                                            style={{
+                                                flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+                                                padding: '6px 0', background: themePreference === 'system' ? 'var(--bg-color)' : 'transparent',
+                                                color: themePreference === 'system' ? 'var(--input-user)' : 'var(--text-muted)',
+                                                border: 'none', borderRadius: '6px', cursor: 'pointer',
+                                                boxShadow: themePreference === 'system' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                                                transition: 'all 0.2s ease'
+                                            }}
+                                        >
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                                            <span style={{ fontSize: '10px', fontWeight: 700 }}>Auto</span>
+                                        </button>
+                                        <button 
+                                            onClick={() => setThemePreference('light')}
+                                            style={{
+                                                flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+                                                padding: '6px 0', background: themePreference === 'light' ? 'var(--bg-color)' : 'transparent',
+                                                color: themePreference === 'light' ? 'var(--input-user)' : 'var(--text-muted)',
+                                                border: 'none', borderRadius: '6px', cursor: 'pointer',
+                                                boxShadow: themePreference === 'light' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                                                transition: 'all 0.2s ease'
+                                            }}
+                                        >
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                                            <span style={{ fontSize: '10px', fontWeight: 700 }}>Light</span>
+                                        </button>
+                                        <button 
+                                            onClick={() => setThemePreference('dark')}
+                                            style={{
+                                                flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+                                                padding: '6px 0', background: themePreference === 'dark' ? 'var(--bg-color)' : 'transparent',
+                                                color: themePreference === 'dark' ? 'var(--input-user)' : 'var(--text-muted)',
+                                                border: 'none', borderRadius: '6px', cursor: 'pointer',
+                                                boxShadow: themePreference === 'dark' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                                                transition: 'all 0.2s ease'
+                                            }}
+                                        >
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                                            <span style={{ fontSize: '10px', fontWeight: 700 }}>Dark</span>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
