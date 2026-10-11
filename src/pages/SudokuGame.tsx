@@ -1,13 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import confetti from 'canvas-confetti';
-import { db, firebase } from '../firebase';
-
-let playerId = localStorage.getItem('sudokuPlayerId');
-if (!playerId) {
-    playerId = 'pid_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
-    localStorage.setItem('sudokuPlayerId', playerId);
-}
 
 const MAX_MISTAKES = 3;
 
@@ -16,6 +9,49 @@ type CellData = {
     isGiven: boolean;
     color: string;
 };
+
+type DifficultyStats = {
+    solved: number;
+    bestTime: number | null;
+    flawless: number;
+};
+
+type PerformanceData = {
+    Easy: DifficultyStats;
+    Medium: DifficultyStats;
+    Hard: DifficultyStats;
+    Expert: DifficultyStats;
+};
+
+const defaultStats: PerformanceData = {
+    Easy: { solved: 0, bestTime: null, flawless: 0 },
+    Medium: { solved: 0, bestTime: null, flawless: 0 },
+    Hard: { solved: 0, bestTime: null, flawless: 0 },
+    Expert: { solved: 0, bestTime: null, flawless: 0 }
+};
+
+const competitivePlatforms = [
+    {
+        name: 'World Puzzle Federation (WPF)',
+        description: 'The official global governing body hosting the annual World Sudoku Championship and international Grand Prix series.',
+        url: 'https://www.worldpuzzle.org/'
+    },
+    {
+        name: 'Logic Masters India (LMI)',
+        description: 'Premier international portal for high-level monthly Sudoku and logic puzzle tournaments with global rankings.',
+        url: 'https://logicmastersindia.com/'
+    },
+    {
+        name: 'Sudoku.com',
+        description: 'High-volume daily challenges, seasonal events, and global time-trial brackets for casual and competitive solvers.',
+        url: 'https://sudoku.com/'
+    },
+    {
+        name: 'Sudokucup',
+        description: 'Dedicated training ground featuring daily ranked puzzles and archives crafted for championship preparation.',
+        url: 'http://www.sudokucup.com/'
+    }
+];
 
 function createPuzzle(removeCount: number) {
     let sol = Array.from({ length: 9 }, () => Array(9).fill(0));
@@ -104,13 +140,10 @@ function createPuzzle(removeCount: number) {
 }
 
 export default function SudokuGame() {
-    const [difficultyText, setDifficultyText] = useState('Medium');
+    const [difficultyText, setDifficultyText] = useState<'Easy' | 'Medium' | 'Hard' | 'Expert'>('Medium');
     const [difficultyValue, setDifficultyValue] = useState(45);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
-    // Advanced Theme State
-    const [themePreference, setThemePreference] = useState(localStorage.getItem('sudokuTheme') || 'system');
 
     const [grid, setGrid] = useState<CellData[][]>([]);
     const [solution, setSolution] = useState<number[][]>([]);
@@ -120,76 +153,20 @@ export default function SudokuGame() {
     const [secondsElapsed, setSecondsElapsed] = useState(0);
     const [isGameOver, setIsGameOver] = useState(false);
     const [isGameWon, setIsGameWon] = useState(false);
-    const [victoryPoints, setVictoryPoints] = useState(0);
+    const [isNewRecord, setIsNewRecord] = useState(false);
 
-    const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
-    const [leaderboardData, setLeaderboardData] = useState<any[]>([]);
-    const [lbUsername, setLbUsername] = useState('');
-    const [isEditingUsername, setIsEditingUsername] = useState(false);
-    const [inlineInput, setInlineInput] = useState('');
-    const [inlineStatus, setInlineStatus] = useState({ msg: '', type: '' });
-    const [isSavingUsername, setIsSavingUsername] = useState(false);
-    
-    const [usernameCheckTimeout, setUsernameCheckTimeout] = useState<number | null>(null);
-
-    // Professional Theme Effect (Supports OS-level auto-switching)
-    useEffect(() => {
-        const root = document.body;
-        const applyTheme = (themeMode: string) => {
-            if (themeMode === 'dark') {
-                root.classList.add('dark-mode');
-            } else {
-                root.classList.remove('dark-mode');
-            }
-        };
-
-        if (themePreference === 'system') {
-            const systemMedia = window.matchMedia('(prefers-color-scheme: dark)');
-            applyTheme(systemMedia.matches ? 'dark' : 'light');
-
-            const mediaListener = (e: MediaQueryListEvent) => {
-                if (themePreference === 'system') {
-                    applyTheme(e.matches ? 'dark' : 'light');
-                }
-            };
-            systemMedia.addEventListener('change', mediaListener);
-            return () => systemMedia.removeEventListener('change', mediaListener);
-        } else {
-            applyTheme(themePreference);
-        }
-        
-        localStorage.setItem('sudokuTheme', themePreference);
-    }, [themePreference]);
+    const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
+    const [analytics, setAnalytics] = useState<PerformanceData>(() => {
+        const saved = localStorage.getItem('sudokuAnalytics');
+        return saved ? JSON.parse(saved) : defaultStats;
+    });
 
     useEffect(() => {
-        const initUser = async () => {
-            let pName = localStorage.getItem('sudokuPlayerName');
-            if (!pName) {
-                let isAvail = false;
-                let attempts = 0;
-                while (!isAvail && attempts < 5) {
-                    pName = "Player" + Math.floor(Math.random() * 100000);
-                    try {
-                        const docRef = db.collection("usernames").doc(pName.toLowerCase());
-                        const docSnap = await docRef.get();
-                        if (!docSnap.exists) {
-                            await docRef.set({ original: pName, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
-                            localStorage.setItem('sudokuPlayerName', pName);
-                            isAvail = true;
-                        }
-                    } catch (e) {
-                        localStorage.setItem('sudokuPlayerName', pName);
-                        isAvail = true;
-                    }
-                    attempts++;
-                }
-            }
-            setLbUsername(pName || 'Unknown');
-        };
-        initUser();
+        document.body.classList.remove('dark-mode');
+        localStorage.removeItem('sudokuTheme');
     }, []);
 
-    const startNewGame = useCallback((diffVal: number, diffText: string) => {
+    const startNewGame = useCallback((diffVal: number, diffText: 'Easy' | 'Medium' | 'Hard' | 'Expert') => {
         const { solution: newSol, puzzle: newPuz } = createPuzzle(diffVal);
         setSolution(newSol);
 
@@ -206,6 +183,7 @@ export default function SudokuGame() {
         setSecondsElapsed(0);
         setIsGameOver(false);
         setIsGameWon(false);
+        setIsNewRecord(false);
         setSelectedCell(null);
     }, []);
 
@@ -215,7 +193,8 @@ export default function SudokuGame() {
             const data = JSON.parse(saved);
             setSolution(data.solution);
             setDifficultyValue(data.difficulty);
-            setDifficultyText(data.difficulty === 30 ? 'Easy' : data.difficulty === 45 ? 'Medium' : data.difficulty === 55 ? 'Hard' : 'Expert');
+            const loadedDiffText = data.difficulty === 30 ? 'Easy' : data.difficulty === 45 ? 'Medium' : data.difficulty === 55 ? 'Hard' : 'Expert';
+            setDifficultyText(loadedDiffText);
             setSecondsElapsed(data.secondsElapsed || 0);
             setMistakesCount(data.mistakesCount || 0);
             setIsGameOver(data.isGameOver || false);
@@ -268,7 +247,6 @@ export default function SudokuGame() {
             isGameOver
         };
         localStorage.setItem('sudokuGame', JSON.stringify(gameData));
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [grid, secondsElapsed, mistakesCount, isGameOver, isGameWon, solution, difficultyValue]);
 
     useEffect(() => {
@@ -277,7 +255,6 @@ export default function SudokuGame() {
             interval = window.setInterval(() => setSecondsElapsed(s => s + 1), 1000);
         }
         return () => window.clearInterval(interval);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isGameOver, isGameWon, solution]);
 
     const formatTime = (totalSeconds: number) => {
@@ -331,7 +308,7 @@ export default function SudokuGame() {
         }
 
         if (isFull && allCorrect && currentMistakes < MAX_MISTAKES) {
-            triggerWin();
+            triggerWin(currentMistakes);
         }
     };
 
@@ -352,129 +329,36 @@ export default function SudokuGame() {
         }
     };
 
-    const triggerWin = () => {
+    const triggerWin = (finalMistakes: number) => {
         setIsGameWon(true);
         confetti({ particleCount: 150, spread: 80, origin: { x: 0, y: 0.6 }, angle: 60, zIndex: 3000 });
         confetti({ particleCount: 150, spread: 80, origin: { x: 1, y: 0.6 }, angle: 120, zIndex: 3000 });
 
-        let points = 225;
-        if (difficultyValue === 30) points = 50;
-        if (difficultyValue === 55) points = 1250;
-        if (difficultyValue === 65) points = 2500;
-        setVictoryPoints(points);
+        const currentDiffStats = analytics[difficultyText];
+        const prevBest = currentDiffStats.bestTime;
+        const recordAchieved = prevBest === null || secondsElapsed < prevBest;
+        setIsNewRecord(recordAchieved);
 
-        let totalScore = parseInt(localStorage.getItem('sudokuTotalScore') || '0');
-        localStorage.setItem('sudokuTotalScore', (totalScore + points).toString());
-
-        const pName = localStorage.getItem('sudokuPlayerName') || 'Unknown';
-        const docId = pName.toLowerCase().replace(/[^a-z0-9]/g, '');
-        
-        db.collection("sudoku_scores").doc(docId).set({
-            name: pName,
-            points: firebase.firestore.FieldValue.increment(points),
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true }).catch(() => {});
-    };
-
-    const fetchLeaderboard = () => {
-        setLeaderboardData([]);
-        db.collection("sudoku_scores").orderBy("points", "desc").limit(10).get().then((querySnapshot) => {
-            const data = querySnapshot.docs.map(doc => doc.data());
-            setLeaderboardData(data);
-        }).catch(() => {});
-    };
-
-    const openLeaderboard = () => {
-        setIsLeaderboardOpen(true);
-        setLbUsername(localStorage.getItem('sudokuPlayerName') || 'Unknown');
-        setIsEditingUsername(false);
-        fetchLeaderboard();
-    };
-
-    const handleUsernameCheck = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const newName = e.target.value.trim();
-        setInlineInput(e.target.value);
-        
-        if (usernameCheckTimeout) window.clearTimeout(usernameCheckTimeout);
-        setIsSavingUsername(true);
-
-        const currentName = localStorage.getItem('sudokuPlayerName') || "";
-        if (newName === currentName) {
-            setInlineStatus({ msg: '', type: '' });
-            return;
-        }
-
-        const alphanumericRegex = /^[a-zA-Z0-9]+$/;
-        if (!newName) {
-            setInlineStatus({ msg: '', type: '' });
-            return;
-        }
-        if (!alphanumericRegex.test(newName)) {
-            setInlineStatus({ msg: 'Letters and numbers only.', type: 'msg-error' });
-            return;
-        }
-
-        setInlineStatus({ msg: 'Checking...', type: '' });
-
-        const timeout = window.setTimeout(async () => {
-            try {
-                const docSnap = await db.collection("usernames").doc(newName.toLowerCase()).get();
-                if (docSnap.exists) {
-                    setInlineStatus({ msg: 'Taken!', type: 'msg-error' });
-                } else {
-                    setInlineStatus({ msg: 'Available!', type: 'msg-success' });
-                    setIsSavingUsername(false);
-                }
-            } catch (error) {
-                setInlineStatus({ msg: 'Connection error.', type: 'msg-error' });
+        const updatedAnalytics: PerformanceData = {
+            ...analytics,
+            [difficultyText]: {
+                solved: currentDiffStats.solved + 1,
+                bestTime: recordAchieved ? secondsElapsed : prevBest,
+                flawless: finalMistakes === 0 ? currentDiffStats.flawless + 1 : currentDiffStats.flawless
             }
-        }, 500);
-        setUsernameCheckTimeout(timeout);
+        };
+
+        setAnalytics(updatedAnalytics);
+        localStorage.setItem('sudokuAnalytics', JSON.stringify(updatedAnalytics));
     };
 
-    const confirmUsernameChange = async () => {
-        const newName = inlineInput.trim();
-        const oldName = localStorage.getItem('sudokuPlayerName');
-        
-        const safeNewName = newName.toLowerCase().replace(/[^a-z0-9]/g, '');
-        const safeOldName = oldName ? oldName.toLowerCase().replace(/[^a-z0-9]/g, '') : '';
-        
-        setIsSavingUsername(true);
-        setInlineStatus({ msg: 'Saving...', type: '' });
-
-        try {
-            await db.collection("usernames").doc(safeNewName).set({
-                original: newName,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            });
-
-            if (safeOldName && safeOldName !== safeNewName) {
-                const oldDoc = await db.collection("sudoku_scores").doc(safeOldName).get();
-                if (oldDoc.exists) {
-                    const data = oldDoc.data();
-                    await db.collection("sudoku_scores").doc(safeNewName).set({
-                        name: newName,
-                        points: data?.points || 0,
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    await db.collection("sudoku_scores").doc(safeOldName).delete();
-                }
-            }
-
-            localStorage.setItem('sudokuPlayerName', newName);
-            setLbUsername(newName);
-            setInlineStatus({ msg: 'Saved successfully!', type: 'msg-success' });
-            
-            setTimeout(() => {
-                setIsEditingUsername(false);
-                fetchLeaderboard();
-            }, 600);
-
-        } catch (e) {
-            setInlineStatus({ msg: 'Failed to save.', type: 'msg-error' });
-            setIsSavingUsername(false);
-        }
+    const resetAnalytics = () => {
+        setAnalytics(defaultStats);
+        localStorage.setItem('sudokuAnalytics', JSON.stringify(defaultStats));
     };
+
+    const totalSolved = analytics.Easy.solved + analytics.Medium.solved + analytics.Hard.solved + analytics.Expert.solved;
+    const totalFlawless = analytics.Easy.flawless + analytics.Medium.flawless + analytics.Hard.flawless + analytics.Expert.flawless;
 
     return (
         <div onClick={() => { setIsMenuOpen(false); setIsDropdownOpen(false); }}>
@@ -489,68 +373,17 @@ export default function SudokuGame() {
                                     <line x1="3" y1="18" x2="21" y2="18" className="line-3"></line>
                                 </svg>
                             </div>
-                            <div className={`main-menu ${isMenuOpen ? 'show' : ''}`} style={{ paddingBottom: '12px' }}>
+                            <div className={`main-menu ${isMenuOpen ? 'show' : ''}`}>
                                 <Link to="/rules">Rules</Link>
                                 <Link to="/solution">Solution</Link>
-                                <a href="#" className="mobile-menu-leaderboard" onClick={(e) => { e.preventDefault(); openLeaderboard(); }}>Leaderboard</a>
-                                
-                                <div style={{ borderTop: '1px solid var(--nav-border)', margin: '8px 0' }}></div>
-                                
-                                {/* Professional Theme Segmented Control */}
-                                <div onClick={(e) => e.stopPropagation()} style={{ padding: '4px 16px' }}>
-                                    <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px', display: 'block' }}>Appearance</span>
-                                    <div style={{ display: 'flex', background: 'var(--numpad-active)', padding: '4px', borderRadius: '8px', gap: '4px', border: '1px solid var(--nav-border)' }}>
-                                        <button 
-                                            onClick={() => setThemePreference('system')}
-                                            style={{
-                                                flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
-                                                padding: '6px 0', background: themePreference === 'system' ? 'var(--bg-color)' : 'transparent',
-                                                color: themePreference === 'system' ? 'var(--input-user)' : 'var(--text-muted)',
-                                                border: 'none', borderRadius: '6px', cursor: 'pointer',
-                                                boxShadow: themePreference === 'system' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-                                                transition: 'all 0.2s ease'
-                                            }}
-                                        >
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
-                                            <span style={{ fontSize: '10px', fontWeight: 700 }}>Auto</span>
-                                        </button>
-                                        <button 
-                                            onClick={() => setThemePreference('light')}
-                                            style={{
-                                                flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
-                                                padding: '6px 0', background: themePreference === 'light' ? 'var(--bg-color)' : 'transparent',
-                                                color: themePreference === 'light' ? 'var(--input-user)' : 'var(--text-muted)',
-                                                border: 'none', borderRadius: '6px', cursor: 'pointer',
-                                                boxShadow: themePreference === 'light' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-                                                transition: 'all 0.2s ease'
-                                            }}
-                                        >
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-                                            <span style={{ fontSize: '10px', fontWeight: 700 }}>Light</span>
-                                        </button>
-                                        <button 
-                                            onClick={() => setThemePreference('dark')}
-                                            style={{
-                                                flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
-                                                padding: '6px 0', background: themePreference === 'dark' ? 'var(--bg-color)' : 'transparent',
-                                                color: themePreference === 'dark' ? 'var(--input-user)' : 'var(--text-muted)',
-                                                border: 'none', borderRadius: '6px', cursor: 'pointer',
-                                                boxShadow: themePreference === 'dark' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-                                                transition: 'all 0.2s ease'
-                                            }}
-                                        >
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-                                            <span style={{ fontSize: '10px', fontWeight: 700 }}>Dark</span>
-                                        </button>
-                                    </div>
-                                </div>
+                                <a href="#" className="mobile-menu-leaderboard" onClick={(e) => { e.preventDefault(); setIsAnalyticsOpen(true); }}>Performance Analytics</a>
                             </div>
                         </div>
                         <h2>Sudoku</h2>
                     </div>
 
                     <div className="nav-right">
-                        <button className="leaderboard-btn hide-on-mobile" onClick={openLeaderboard}>Leaderboard</button>
+                        <button className="leaderboard-btn hide-on-mobile" onClick={() => setIsAnalyticsOpen(true)}>Performance Analytics</button>
 
                         <div className="custom-dropdown">
                             <div className={`dropdown-selected new-game-btn ${isDropdownOpen ? 'open' : ''}`} onClick={(e) => { e.stopPropagation(); setIsDropdownOpen(!isDropdownOpen); }}>
@@ -560,7 +393,7 @@ export default function SudokuGame() {
                                 </svg>
                             </div>
                             <div className={`dropdown-options ${isDropdownOpen ? 'show' : ''}`}>
-                                <div className="dropdown-option" onClick={() => startNewGame(30, 'Easy')}>Easy</div>
+                                <div className={`dropdown-option ${difficultyValue === 30 ? 'selected' : ''}`} onClick={() => startNewGame(30, 'Easy')}>Easy</div>
                                 <div className={`dropdown-option ${difficultyValue === 45 ? 'selected' : ''}`} onClick={() => startNewGame(45, 'Medium')}>Medium</div>
                                 <div className={`dropdown-option ${difficultyValue === 55 ? 'selected' : ''}`} onClick={() => startNewGame(55, 'Hard')}>Hard</div>
                                 <div className={`dropdown-option ${difficultyValue === 65 ? 'selected' : ''}`} onClick={() => startNewGame(65, 'Expert')}>Expert</div>
@@ -573,7 +406,6 @@ export default function SudokuGame() {
             <div className="main-content">
                 <div className="app-container">
                     <div className="game-core-area">
-                        
                         <div className={`local-modal ${isGameOver ? 'show' : ''}`}>
                             <div className="modal-content sudoku-game-over-card">
                                 <h2>Game Over</h2>
@@ -662,7 +494,49 @@ export default function SudokuGame() {
 
                     <div className="home-about-container">
                         <h2>About Sudoku</h2>
-                        <p>This popular Japanese puzzle game is based entirely on logic. The goal is to fill a 9x9 grid with numbers so that every row, column, and 3x3 box contains all digits from 1 to 9. Playing daily improves your concentration and brain power. Start a game now to make it your favorite online puzzle.</p>
+                        <p>This popular Japanese puzzle game is based entirely on logic. The goal is to fill a 9x9 grid with numbers so that every row, column, and 3x3 box contains all digits from 1 to 9. Playing daily improves your concentration and logical deduction.</p>
+
+                        <div style={{ marginTop: '40px', borderTop: '1px solid var(--nav-border)', paddingTop: '32px' }}>
+                            <h2 style={{ fontSize: '20px', fontWeight: 800, marginBottom: '8px', letterSpacing: '-0.5px' }}>Global Competitive Arenas</h2>
+                            <p style={{ marginBottom: '24px', fontSize: '15px', color: 'var(--text-muted)' }}>
+                                Ready to test your speed and logic against the world? Once you have mastered your skills here, enter official international tournaments and global leaderboards on these premier platforms:
+                            </p>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
+                                {competitivePlatforms.map((platform, idx) => (
+                                    <a
+                                        key={idx}
+                                        href={platform.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        style={{
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            justifyContent: 'space-between',
+                                            padding: '20px',
+                                            borderRadius: '12px',
+                                            border: '1px solid var(--nav-border)',
+                                            backgroundColor: 'var(--bg-color)',
+                                            textDecoration: 'none',
+                                            color: 'var(--text-color)',
+                                            transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                                            boxShadow: '0 2px 4px rgba(0,0,0,0.03)'
+                                        }}
+                                    >
+                                        <div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                                <strong style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-color)' }}>{platform.name}</strong>
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--input-user)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginLeft: '8px' }}>
+                                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                                    <polyline points="15 3 21 3 21 9"></polyline>
+                                                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                                                </svg>
+                                            </div>
+                                            <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>{platform.description}</p>
+                                        </div>
+                                    </a>
+                                ))}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -685,22 +559,27 @@ export default function SudokuGame() {
                             <strong>{formatTime(secondsElapsed)}</strong>
                         </div>
                         <div className="v-stat">
-                            <span>+Points</span>
-                            <strong>{victoryPoints}</strong>
+                            <span>Personal Best</span>
+                            <strong>{analytics[difficultyText].bestTime !== null ? formatTime(analytics[difficultyText].bestTime!) : formatTime(secondsElapsed)}</strong>
                         </div>
                     </div>
+                    {isNewRecord && (
+                        <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--input-user)', marginBottom: '16px' }}>
+                            New Personal Record!
+                        </div>
+                    )}
                     <button onClick={() => startNewGame(difficultyValue, difficultyText)}>Play Again</button>
                 </div>
             </div>
 
-            <div className={`modal ${isLeaderboardOpen ? 'show' : ''}`} onClick={() => setIsLeaderboardOpen(false)}>
+            <div className={`modal ${isAnalyticsOpen ? 'show' : ''}`} onClick={() => setIsAnalyticsOpen(false)}>
                 <div className="modal-content lb-elite-card" onClick={(e) => e.stopPropagation()}>
                     <div className="lb-elite-header">
                         <div>
-                            <h2 className="lb-title">Leaderboard</h2>
-                            <p className="lb-subtitle">Global Top 10 Scores</p>
+                            <h2 className="lb-title">Performance Analytics</h2>
+                            <p className="lb-subtitle">Personal Practice Benchmarks</p>
                         </div>
-                        <button className="lb-elite-close" onClick={() => setIsLeaderboardOpen(false)}>
+                        <button className="lb-elite-close" onClick={() => setIsAnalyticsOpen(false)}>
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <line x1="18" y1="6" x2="6" y2="18"></line>
                                 <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -709,63 +588,58 @@ export default function SudokuGame() {
                     </div>
 
                     <div className="lb-elite-profile">
-                        {!isEditingUsername ? (
-                            <div className="lb-profile-view">
-                                <div className="lb-profile-info">
-                                    <span className="lb-profile-label">Current Player</span>
-                                    <strong>{lbUsername}</strong>
-                                </div>
-                                <button className="lb-elite-edit-btn" onClick={() => { setInlineInput(lbUsername); setInlineStatus({msg:'', type:''}); setIsEditingUsername(true); }}>
-                                    <span>Edit</span>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
-                                </button>
+                        <div className="lb-profile-view" style={{ display: 'flex', justifyContent: 'space-around', textAlign: 'center', padding: '4px 0' }}>
+                            <div>
+                                <span className="lb-profile-label" style={{ display: 'block', fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Total Solved</span>
+                                <strong style={{ fontSize: '22px', fontWeight: 800, color: 'var(--text-color)' }}>{totalSolved}</strong>
                             </div>
-                        ) : (
-                            <div className="lb-profile-edit">
-                                <div className="lb-edit-flex">
-                                    <div className="lb-input-wrapper">
-                                        <input type="text" id="inline-username-input" autoFocus autoComplete="off" spellCheck="false" maxLength={15} value={inlineInput} onChange={handleUsernameCheck} placeholder="New username" />
-                                        <div className={`status-msg ${inlineStatus.type}`}>{inlineStatus.msg}</div>
-                                    </div>
-                                    <div className="lb-action-wrapper">
-                                        <button className="lb-elite-cancel" onClick={() => setIsEditingUsername(false)}>Cancel</button>
-                                        <button className="lb-elite-save" disabled={isSavingUsername} onClick={confirmUsernameChange}>Save</button>
-                                    </div>
-                                </div>
+                            <div style={{ borderLeft: '1px solid var(--nav-border)' }}></div>
+                            <div>
+                                <span className="lb-profile-label" style={{ display: 'block', fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Flawless Games</span>
+                                <strong style={{ fontSize: '22px', fontWeight: 800, color: 'var(--input-user)' }}>{totalFlawless}</strong>
                             </div>
-                        )}
+                        </div>
                     </div>
 
                     <div className="leaderboard-container">
                         <div className="leaderboard-list">
-                            {leaderboardData.length === 0 ? (
-                                <div className="lb-msg">Loading top scores...</div>
-                            ) : (
-                                leaderboardData.map((data, index) => {
-                                    const rank = index + 1;
-                                    let rankClass = "lb-rank";
-                                    let rankIcon: React.ReactNode = rank;
-                                    if (rank === 1) { rankClass += " rank-1"; rankIcon = "🥇"; }
-                                    else if (rank === 2) { rankClass += " rank-2"; rankIcon = "🥈"; }
-                                    else if (rank === 3) { rankClass += " rank-3"; rankIcon = "🥉"; }
-
-                                    const isMe = data.name === lbUsername; 
-
-                                    return (
-                                        <div className="lb-row" key={index} style={{ alignItems: 'center' }}>
-                                            <div className={rankClass}>{rankIcon}</div>
-                                            <div className="lb-details" style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-                                                <div className="lb-name" style={{ fontSize: '16px', margin: 0 }}>
-                                                    {isMe ? lbUsername : data.name} 
-                                                    {isMe && <span style={{fontSize: '11px', color: 'var(--input-user)', background: 'var(--selected-bg)', padding: '2px 6px', borderRadius: '10px', marginLeft: '6px', fontWeight: 800}}>You</span>}
-                                                </div>
+                            {(['Easy', 'Medium', 'Hard', 'Expert'] as const).map((level) => {
+                                const stat = analytics[level];
+                                return (
+                                    <div className="lb-row" key={level} style={{ alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px' }}>
+                                        <div className="lb-details">
+                                            <div className="lb-name" style={{ fontSize: '16px', fontWeight: 700, marginBottom: '2px' }}>{level}</div>
+                                            <div className="lb-diff" style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                                                {stat.solved} Completed &bull; {stat.flawless} Flawless
                                             </div>
-                                            <div className="lb-score">{data.points}</div>
                                         </div>
-                                    )
-                                })
-                            )}
+                                        <div style={{ textAlign: 'right' }}>
+                                            <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', textTransform: 'uppercase', fontWeight: 600 }}>Best Time</span>
+                                            <div className="lb-score" style={{ fontSize: '16px', fontWeight: 800 }}>
+                                                {stat.bestTime !== null ? formatTime(stat.bestTime) : '--:--'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
+                    </div>
+
+                    <div style={{ padding: '16px 24px 8px', textAlign: 'right', borderTop: '1px solid var(--nav-border)', marginTop: '8px' }}>
+                        <button
+                            onClick={resetAnalytics}
+                            style={{
+                                background: 'transparent',
+                                border: 'none',
+                                color: 'var(--text-muted)',
+                                fontSize: '12px',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                textDecoration: 'underline'
+                            }}
+                        >
+                            Reset Analytics Data
+                        </button>
                     </div>
                 </div>
             </div>
