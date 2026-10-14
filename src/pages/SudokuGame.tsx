@@ -20,14 +20,12 @@ type PerformanceData = {
     Easy: DifficultyStats;
     Medium: DifficultyStats;
     Hard: DifficultyStats;
-    Expert: DifficultyStats;
 };
 
 const defaultStats: PerformanceData = {
     Easy: { solved: 0, bestTime: null, flawless: 0 },
     Medium: { solved: 0, bestTime: null, flawless: 0 },
-    Hard: { solved: 0, bestTime: null, flawless: 0 },
-    Expert: { solved: 0, bestTime: null, flawless: 0 }
+    Hard: { solved: 0, bestTime: null, flawless: 0 }
 };
 
 function createPuzzle(removeCount: number) {
@@ -117,7 +115,7 @@ function createPuzzle(removeCount: number) {
 }
 
 export default function SudokuGame() {
-    const [difficultyText, setDifficultyText] = useState<'Easy' | 'Medium' | 'Hard' | 'Expert'>('Medium');
+    const [difficultyText, setDifficultyText] = useState<'Easy' | 'Medium' | 'Hard'>('Medium');
     const [difficultyValue, setDifficultyValue] = useState(45);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -132,10 +130,14 @@ export default function SudokuGame() {
     const [isGameWon, setIsGameWon] = useState(false);
     const [isNewRecord, setIsNewRecord] = useState(false);
 
-    const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
+    const [isStatsOpen, setIsStatsOpen] = useState(false);
     const [analytics, setAnalytics] = useState<PerformanceData>(() => {
         const saved = localStorage.getItem('sudokuAnalytics');
-        return saved ? JSON.parse(saved) : defaultStats;
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            return { ...defaultStats, Easy: parsed.Easy || defaultStats.Easy, Medium: parsed.Medium || defaultStats.Medium, Hard: parsed.Hard || defaultStats.Hard };
+        }
+        return defaultStats;
     });
 
     useEffect(() => {
@@ -143,7 +145,7 @@ export default function SudokuGame() {
         localStorage.removeItem('sudokuTheme');
     }, []);
 
-    const startNewGame = useCallback((diffVal: number, diffText: 'Easy' | 'Medium' | 'Hard' | 'Expert') => {
+    const startNewGame = useCallback((diffVal: number, diffText: 'Easy' | 'Medium' | 'Hard') => {
         const { solution: newSol, puzzle: newPuz } = createPuzzle(diffVal);
         setSolution(newSol);
 
@@ -169,8 +171,20 @@ export default function SudokuGame() {
         if (saved) {
             const data = JSON.parse(saved);
             setSolution(data.solution);
-            setDifficultyValue(data.difficulty);
-            const loadedDiffText = data.difficulty === 30 ? 'Easy' : data.difficulty === 45 ? 'Medium' : data.difficulty === 55 ? 'Hard' : 'Expert';
+            
+            let loadedDiffVal = data.difficulty;
+            let loadedDiffText: 'Easy' | 'Medium' | 'Hard' = 'Medium';
+            
+            if (loadedDiffVal === 30) {
+                loadedDiffText = 'Easy';
+            } else if (loadedDiffVal === 45) {
+                loadedDiffText = 'Medium';
+            } else {
+                loadedDiffVal = 55;
+                loadedDiffText = 'Hard';
+            }
+            
+            setDifficultyValue(loadedDiffVal);
             setDifficultyText(loadedDiffText);
             setSecondsElapsed(data.secondsElapsed || 0);
             setMistakesCount(data.mistakesCount || 0);
@@ -334,8 +348,8 @@ export default function SudokuGame() {
         localStorage.setItem('sudokuAnalytics', JSON.stringify(defaultStats));
     };
 
-    const totalSolved = analytics.Easy.solved + analytics.Medium.solved + analytics.Hard.solved + analytics.Expert.solved;
-    const totalFlawless = analytics.Easy.flawless + analytics.Medium.flawless + analytics.Hard.flawless + analytics.Expert.flawless;
+    const totalSolved = analytics.Easy.solved + analytics.Medium.solved + analytics.Hard.solved;
+    const totalFlawless = analytics.Easy.flawless + analytics.Medium.flawless + analytics.Hard.flawless;
 
     return (
         <div onClick={() => { setIsMenuOpen(false); setIsDropdownOpen(false); }}>
@@ -353,14 +367,14 @@ export default function SudokuGame() {
                             <div className={`main-menu ${isMenuOpen ? 'show' : ''}`}>
                                 <Link to="/rules">Rules</Link>
                                 <Link to="/solution">Solution</Link>
-                                <a href="#" className="mobile-menu-leaderboard" onClick={(e) => { e.preventDefault(); setIsAnalyticsOpen(true); }}>Performance Analytics</a>
+                                <a href="#" className="mobile-menu-leaderboard" onClick={(e) => { e.preventDefault(); setIsStatsOpen(true); }}>Metrics</a>
                             </div>
                         </div>
                         <h2>Sudoku</h2>
                     </div>
 
                     <div className="nav-right">
-                        <button className="leaderboard-btn hide-on-mobile" onClick={() => setIsAnalyticsOpen(true)}>Performance Analytics</button>
+                        <button className="leaderboard-btn hide-on-mobile" onClick={() => setIsStatsOpen(true)}>Metrics</button>
 
                         <div className="custom-dropdown">
                             <div className={`dropdown-selected new-game-btn ${isDropdownOpen ? 'open' : ''}`} onClick={(e) => { e.stopPropagation(); setIsDropdownOpen(!isDropdownOpen); }}>
@@ -373,7 +387,6 @@ export default function SudokuGame() {
                                 <div className={`dropdown-option ${difficultyValue === 30 ? 'selected' : ''}`} onClick={() => startNewGame(30, 'Easy')}>Easy</div>
                                 <div className={`dropdown-option ${difficultyValue === 45 ? 'selected' : ''}`} onClick={() => startNewGame(45, 'Medium')}>Medium</div>
                                 <div className={`dropdown-option ${difficultyValue === 55 ? 'selected' : ''}`} onClick={() => startNewGame(55, 'Hard')}>Hard</div>
-                                <div className={`dropdown-option ${difficultyValue === 65 ? 'selected' : ''}`} onClick={() => startNewGame(65, 'Expert')}>Expert</div>
                             </div>
                         </div>
                     </div>
@@ -507,75 +520,80 @@ export default function SudokuGame() {
                 </div>
             </div>
 
-            <div className={`modal ${isAnalyticsOpen ? 'show' : ''}`} onClick={() => setIsAnalyticsOpen(false)}>
-                <div className="modal-content lb-elite-card" onClick={(e) => e.stopPropagation()}>
-                    <div className="lb-elite-header">
-                        <div>
-                            <h2 className="lb-title">Performance Analytics</h2>
-                            <p className="lb-subtitle">Personal Practice Benchmarks</p>
+            {/* Professional Metrics Dashboard */}
+            <div className={`modal ${isStatsOpen ? 'show' : ''}`} onClick={() => setIsStatsOpen(false)}>
+                <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ 
+                    padding: '32px', 
+                    maxWidth: '380px', 
+                    borderRadius: '24px', 
+                    background: 'var(--bg-color)', 
+                    border: '1px solid var(--nav-border)', 
+                    boxShadow: '0 20px 40px rgba(0,0,0,0.1)' 
+                }}>
+                    
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'var(--input-user)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20v-6M6 20V10M18 20V4"/></svg>
+                            </div>
+                            <div>
+                                <h2 style={{ fontSize: '20px', fontWeight: 800, margin: 0, color: 'var(--text-color)', letterSpacing: '-0.5px' }}>Metrics</h2>
+                                <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600 }}>Lifetime Performance</span>
+                            </div>
                         </div>
-                        <button className="lb-elite-close" onClick={() => setIsAnalyticsOpen(false)}>
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <line x1="18" y1="6" x2="6" y2="18"></line>
-                                <line x1="6" y1="6" x2="18" y2="18"></line>
-                            </svg>
+                        <button onClick={() => setIsStatsOpen(false)} style={{ background: 'var(--numpad-bg)', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', padding: '8px', borderRadius: '50%' }}>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                         </button>
                     </div>
 
-                    <div className="lb-elite-profile">
-                        <div className="lb-profile-view" style={{ display: 'flex', justifyContent: 'space-around', textAlign: 'center', padding: '4px 0' }}>
-                            <div>
-                                <span className="lb-profile-label" style={{ display: 'block', fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Total Solved</span>
-                                <strong style={{ fontSize: '22px', fontWeight: 800, color: 'var(--text-color)' }}>{totalSolved}</strong>
-                            </div>
-                            <div style={{ borderLeft: '1px solid var(--nav-border)' }}></div>
-                            <div>
-                                <span className="lb-profile-label" style={{ display: 'block', fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Flawless Games</span>
-                                <strong style={{ fontSize: '22px', fontWeight: 800, color: 'var(--input-user)' }}>{totalFlawless}</strong>
-                            </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '32px' }}>
+                        <div style={{ padding: '20px', borderRadius: '16px', background: 'var(--numpad-bg)', border: '1px solid var(--nav-border)' }}>
+                            <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>Total Wins</div>
+                            <div style={{ fontSize: '32px', fontWeight: 800, color: 'var(--text-color)', lineHeight: 1 }}>{totalSolved}</div>
+                        </div>
+                        <div style={{ padding: '20px', borderRadius: '16px', background: 'var(--input-user)' }}>
+                            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.8)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>Flawless</div>
+                            <div style={{ fontSize: '32px', fontWeight: 800, color: '#ffffff', lineHeight: 1 }}>{totalFlawless}</div>
                         </div>
                     </div>
 
-                    <div className="leaderboard-container">
-                        <div className="leaderboard-list">
-                            {(['Easy', 'Medium', 'Hard', 'Expert'] as const).map((level) => {
-                                const stat = analytics[level];
-                                return (
-                                    <div className="lb-row" key={level} style={{ alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px' }}>
-                                        <div className="lb-details">
-                                            <div className="lb-name" style={{ fontSize: '16px', fontWeight: 700, marginBottom: '2px' }}>{level}</div>
-                                            <div className="lb-diff" style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                                                {stat.solved} Completed &bull; {stat.flawless} Flawless
-                                            </div>
-                                        </div>
-                                        <div style={{ textAlign: 'right' }}>
-                                            <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', textTransform: 'uppercase', fontWeight: 600 }}>Best Time</span>
-                                            <div className="lb-score" style={{ fontSize: '16px', fontWeight: 800 }}>
-                                                {stat.bestTime !== null ? formatTime(stat.bestTime) : '--:--'}
-                                            </div>
-                                        </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '32px' }}>
+                        <h3 style={{ fontSize: '13px', textTransform: 'uppercase', fontWeight: 800, color: 'var(--text-muted)', letterSpacing: '1px', margin: '0 0 8px 4px' }}>Best Times</h3>
+                        {(['Easy', 'Medium', 'Hard'] as const).map((level) => {
+                            const stat = analytics[level];
+                            return (
+                                <div key={level} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 4px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: level === 'Easy' ? '#10b981' : level === 'Medium' ? '#f59e0b' : '#ef4444' }}></div>
+                                        <span style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-color)' }}>{level}</span>
                                     </div>
-                                );
-                            })}
-                        </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                        <span style={{ fontSize: '14px', color: 'var(--text-muted)', fontWeight: 600 }}>{stat.solved} won</span>
+                                        <span style={{ fontSize: '16px', fontWeight: 800, color: 'var(--text-color)', width: '48px', textAlign: 'right' }}>
+                                            {stat.bestTime !== null ? formatTime(stat.bestTime) : '--:--'}
+                                        </span>
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
 
-                    <div style={{ padding: '16px 24px 8px', textAlign: 'right', borderTop: '1px solid var(--nav-border)', marginTop: '8px' }}>
-                        <button
-                            onClick={resetAnalytics}
-                            style={{
-                                background: 'transparent',
-                                border: 'none',
-                                color: 'var(--text-muted)',
-                                fontSize: '12px',
-                                fontWeight: 600,
-                                cursor: 'pointer',
-                                textDecoration: 'underline'
-                            }}
-                        >
-                            Reset Analytics Data
-                        </button>
-                    </div>
+                    <button 
+                        onClick={resetAnalytics} 
+                        style={{ 
+                            width: '100%',
+                            background: 'none', 
+                            border: '1px solid var(--nav-border)', 
+                            color: 'var(--text-muted)', 
+                            fontSize: '13px', 
+                            fontWeight: 700, 
+                            borderRadius: '12px',
+                            padding: '12px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                        }}>
+                        Reset Metrics
+                    </button>
                 </div>
             </div>
         </div>
