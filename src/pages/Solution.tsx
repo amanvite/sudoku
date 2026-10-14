@@ -16,7 +16,6 @@ export default function Solution() {
                     setOriginalGrid(data.puzzle);
                     setStatus('calculating');
                     
-                    // Simulate an algorithmic calculation sequence
                     setTimeout(() => {
                         setStatus('ready');
                     }, 1400);
@@ -35,7 +34,7 @@ export default function Solution() {
     }, []);
 
     return (
-        <div>
+        <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
             <style>
                 {`
                     @keyframes popIn {
@@ -73,7 +72,7 @@ export default function Solution() {
                 </div>
             </nav>
 
-            <div className="main-content" style={{ paddingBottom: '60px' }}>
+            <div className="main-content" style={{ flex: 1, paddingBottom: '40px' }}>
                 <div className="app-container" style={{ maxWidth: '440px', margin: '0 auto' }}>
                     
                     <div style={{ textAlign: 'center', padding: '32px 0 24px' }}>
@@ -129,6 +128,7 @@ export default function Solution() {
                         <div style={{
                             display: 'grid',
                             gridTemplateColumns: 'repeat(9, 1fr)',
+                            gridTemplateRows: 'repeat(9, 1fr)', // This fixes the spillover!
                             width: '100%',
                             aspectRatio: '1/1',
                             border: '3px solid var(--text-color)',
@@ -154,7 +154,6 @@ export default function Solution() {
                                             fontWeight: isGiven ? 800 : 600,
                                             color: isGiven ? 'var(--text-color)' : 'var(--input-user)',
                                             backgroundColor: isGiven ? 'transparent' : 'rgba(37, 99, 235, 0.04)',
-                                            // The mathematical stagger effect:
                                             animation: !isGiven ? `popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) ${((i * 9) + j) * 0.012}s both` : 'none'
                                         }}>
                                             {val}
@@ -206,7 +205,8 @@ export default function Solution() {
                 </div>
             </div>
 
-            <footer className="app-footer" style={{ position: 'fixed', bottom: 0, width: '100%', background: 'var(--bg-color)', borderTop: '1px solid var(--nav-border)' }}>
+            {/* Changed from inline fixed styling to standard class for natural flow */}
+            <footer className="app-footer">
                 <p>&copy; 2026. All rights reserved.</p>
             </footer>
         </div>
