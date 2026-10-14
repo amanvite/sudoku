@@ -30,29 +30,6 @@ const defaultStats: PerformanceData = {
     Expert: { solved: 0, bestTime: null, flawless: 0 }
 };
 
-const competitivePlatforms = [
-    {
-        name: 'World Puzzle Federation (WPF)',
-        description: 'The official global governing body hosting the annual World Sudoku Championship and international Grand Prix series.',
-        url: 'https://www.worldpuzzle.org/'
-    },
-    {
-        name: 'Logic Masters India (LMI)',
-        description: 'Premier international portal for high-level monthly Sudoku and logic puzzle tournaments with global rankings.',
-        url: 'https://logicmastersindia.com/'
-    },
-    {
-        name: 'Sudoku.com',
-        description: 'High-volume daily challenges, seasonal events, and global time-trial brackets for casual and competitive solvers.',
-        url: 'https://sudoku.com/'
-    },
-    {
-        name: 'Sudokucup',
-        description: 'Dedicated training ground featuring daily ranked puzzles and archives crafted for championship preparation.',
-        url: 'http://www.sudokucup.com/'
-    }
-];
-
 function createPuzzle(removeCount: number) {
     let sol = Array.from({ length: 9 }, () => Array(9).fill(0));
 
@@ -495,48 +472,6 @@ export default function SudokuGame() {
                     <div className="home-about-container">
                         <h2>About Sudoku</h2>
                         <p>This popular Japanese puzzle game is based entirely on logic. The goal is to fill a 9x9 grid with numbers so that every row, column, and 3x3 box contains all digits from 1 to 9. Playing daily improves your concentration and logical deduction.</p>
-
-                        <div style={{ marginTop: '40px', borderTop: '1px solid var(--nav-border)', paddingTop: '32px' }}>
-                            <h2 style={{ fontSize: '20px', fontWeight: 800, marginBottom: '8px', letterSpacing: '-0.5px' }}>Global Competitive Arenas</h2>
-                            <p style={{ marginBottom: '24px', fontSize: '15px', color: 'var(--text-muted)' }}>
-                                Ready to test your speed and logic against the world? Once you have mastered your skills here, enter official international tournaments and global leaderboards on these premier platforms:
-                            </p>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
-                                {competitivePlatforms.map((platform, idx) => (
-                                    <a
-                                        key={idx}
-                                        href={platform.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        style={{
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            justifyContent: 'space-between',
-                                            padding: '20px',
-                                            borderRadius: '12px',
-                                            border: '1px solid var(--nav-border)',
-                                            backgroundColor: 'var(--bg-color)',
-                                            textDecoration: 'none',
-                                            color: 'var(--text-color)',
-                                            transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                                            boxShadow: '0 2px 4px rgba(0,0,0,0.03)'
-                                        }}
-                                    >
-                                        <div>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                                                <strong style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-color)' }}>{platform.name}</strong>
-                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--input-user)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginLeft: '8px' }}>
-                                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                                                    <polyline points="15 3 21 3 21 9"></polyline>
-                                                    <line x1="10" y1="14" x2="21" y2="3"></line>
-                                                </svg>
-                                            </div>
-                                            <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>{platform.description}</p>
-                                        </div>
-                                    </a>
-                                ))}
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
